@@ -1,0 +1,104 @@
+@page "/groceries/lists"
+@inject ApplicationDbContext Db
+@inject NavigationManager Nav
+
+<PageTitle>Grocery Lists</PageTitle>
+
+<h1 class="mb-3">Grocery Lists</h1>
+<p class="text-muted">Create lists manually. Items can be free text or from saved items.</p>
+
+<div class="card mb-4">
+    <div class="card-header">New list</div>
+    <div class="card-body">
+        <EditForm Model="createModel" OnValidSubmit="CreateList">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="row g-3 align-items-end">
+                <div class="col-sm-5">
+                    <label class="form-label">Name</label>
+                    <InputText class="form-control" @bind-Value="createModel.Name" />
+                </div>
+                <div class="col-sm-4">
+                    <label class="form-label">Week start (optional)</label>
+                    <InputDate class="form-control" @bind-Value="createModel.WeekStart" />
+                </div>
+                <div class="col-sm-3 d-grid">
+                    <button class="btn btn-primary" type="submit">Create</button>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@if (!lists.Any())
+{
+    <div class="alert alert-info">No lists yet.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Week</th>
+                    <th>Items</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var list in lists)
+                {
+                    <tr>
+                        <td>@list.Name</td>
+                        <td>@list.WeekStart</td>
+                        <td>@list.Items.Count</td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-primary" href=$"/groceries/lists/{list.Id}">Open</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<GroceryList> lists = new();
+    private CreateListModel createModel = new();
+
+    protected override void OnInitialized()
+    {
+        Load();
+    }
+
+    private void Load()
+    {
+        lists = Db.GroceryLists.Include(l => l.Items)
+            .OrderByDescending(l => l.Id)
+            .ToList();
+    }
+
+    private void CreateList()
+    {
+        if (string.IsNullOrWhiteSpace(createModel.Name))
+        {
+            createModel.Name = "Grocery list";
+        }
+
+        var list = new GroceryList
+        {
+            Name = createModel.Name.Trim(),
+            WeekStart = createModel.WeekStart
+        };
+        Db.GroceryLists.Add(list);
+        Db.SaveChanges();
+        Nav.NavigateTo($"/groceries/lists/{list.Id}");
+    }
+
+    public class CreateListModel
+    {
+        public string Name { get; set; } = "This week groceries";
+        public DateOnly? WeekStart { get; set; } = DateOnly.FromDateTime(DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek));
+    }
+}

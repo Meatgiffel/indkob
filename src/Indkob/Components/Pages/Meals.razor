@@ -1,0 +1,136 @@
+@page "/meals"
+@inject ApplicationDbContext Db
+
+<PageTitle>Meals</PageTitle>
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+        <h1 class="mb-0">Meals</h1>
+        <p class="text-muted mb-0">Simple meal entries without recipes.</p>
+    </div>
+    <button class="btn btn-primary" @onclick="StartNew">Add meal</button>
+</div>
+
+@if (!meals.Any())
+{
+    <div class="alert alert-info">No meals yet. Add your first one.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var meal in meals)
+                {
+                    <tr>
+                        <td>@meal.Name</td>
+                        <td class="text-muted">@meal.Description</td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-outline-primary me-2" @onclick="() => StartEdit(meal)">Edit</button>
+                            <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteMeal(meal.Id)">Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (editing != null)
+{
+    <div class="card mt-4">
+        <div class="card-header">@(editing.Id == 0 ? "Add meal" : "Edit meal")</div>
+        <div class="card-body">
+            <EditForm Model="editing" OnValidSubmit="SaveMeal">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <div class="mb-3">
+                    <label class="form-label">Name</label>
+                    <InputText class="form-control" @bind-Value="editing.Name" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Description / notes</label>
+                    <InputTextArea class="form-control" @bind-Value="editing.Description" rows="3" />
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary" type="submit">Save</button>
+                    <button class="btn btn-secondary" type="button" @onclick="CancelEdit">Cancel</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Meal> meals = new();
+    private Meal? editing;
+
+    protected override void OnInitialized()
+    {
+        LoadMeals();
+    }
+
+    private void LoadMeals()
+    {
+        meals = Db.Meals.OrderBy(m => m.Name).ToList();
+        StateHasChanged();
+    }
+
+    private void StartNew()
+    {
+        editing = new Meal();
+    }
+
+    private void StartEdit(Meal meal)
+    {
+        editing = new Meal
+        {
+            Id = meal.Id,
+            Name = meal.Name,
+            Description = meal.Description
+        };
+    }
+
+    private void CancelEdit()
+    {
+        editing = null;
+    }
+
+    private void SaveMeal()
+    {
+        if (editing == null) return;
+
+        if (editing.Id == 0)
+        {
+            Db.Meals.Add(editing);
+        }
+        else
+        {
+            var existing = Db.Meals.FirstOrDefault(m => m.Id == editing.Id);
+            if (existing == null) return;
+            existing.Name = editing.Name;
+            existing.Description = editing.Description;
+        }
+
+        Db.SaveChanges();
+        editing = null;
+        LoadMeals();
+    }
+
+    private void DeleteMeal(int id)
+    {
+        var target = Db.Meals.FirstOrDefault(m => m.Id == id);
+        if (target == null) return;
+
+        Db.Meals.Remove(target);
+        Db.SaveChanges();
+        LoadMeals();
+    }
+}

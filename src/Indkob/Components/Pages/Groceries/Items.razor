@@ -1,0 +1,140 @@
+@page "/groceries/items"
+@inject ApplicationDbContext Db
+
+<PageTitle>Grocery Items</PageTitle>
+
+<h1 class="mb-3">Grocery Items</h1>
+<p class="text-muted">Saved items help speed up list creation. Defaults can be overridden per list item.</p>
+
+<button class="btn btn-primary mb-3" @onclick="StartNew">Add item</button>
+
+@if (!items.Any())
+{
+    <div class="alert alert-info">No items yet.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Default unit</th>
+                    <th>Category</th>
+                    <th class="text-end" style="width:160px">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in items)
+                {
+                    <tr>
+                        <td>@item.Name</td>
+                        <td>@item.DefaultUnit</td>
+                        <td>@item.GroceryCategory?.Name</td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-outline-primary me-2" @onclick="() => StartEdit(item)">Edit</button>
+                            <button class="btn btn-sm btn-outline-danger" @onclick="() => Delete(item.Id)">Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (editing != null)
+{
+    <div class="card mt-3">
+        <div class="card-header">@(editing.Id == 0 ? "Add item" : "Edit item")</div>
+        <div class="card-body">
+            <EditForm Model="editing" OnValidSubmit="Save">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <div class="mb-3">
+                    <label class="form-label">Name</label>
+                    <InputText class="form-control" @bind-Value="editing.Name" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Default unit</label>
+                    <InputText class="form-control" @bind-Value="editing.DefaultUnit" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Default category</label>
+                    <InputSelect class="form-select" @bind-Value="editing.GroceryCategoryId">
+                        <option value="">-- uncategorized --</option>
+                        @foreach (var cat in categories)
+                        {
+                            <option value="@cat.Id">@cat.Name</option>
+                        }
+                    </InputSelect>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary" type="submit">Save</button>
+                    <button class="btn btn-secondary" type="button" @onclick="Cancel">Cancel</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    private List<GroceryItem> items = new();
+    private List<GroceryCategory> categories = new();
+    private GroceryItem? editing;
+
+    protected override void OnInitialized()
+    {
+        Load();
+    }
+
+    private void Load()
+    {
+        categories = Db.GroceryCategories.OrderBy(c => c.SortOrder).ThenBy(c => c.Name).ToList();
+        items = Db.GroceryItems.Include(i => i.GroceryCategory).OrderBy(i => i.Name).ToList();
+    }
+
+    private void StartNew() => editing = new GroceryItem();
+
+    private void StartEdit(GroceryItem item)
+    {
+        editing = new GroceryItem
+        {
+            Id = item.Id,
+            Name = item.Name,
+            DefaultUnit = item.DefaultUnit,
+            GroceryCategoryId = item.GroceryCategoryId
+        };
+    }
+
+    private void Cancel() => editing = null;
+
+    private void Save()
+    {
+        if (editing == null) return;
+        if (editing.Id == 0)
+        {
+            Db.GroceryItems.Add(editing);
+        }
+        else
+        {
+            var existing = Db.GroceryItems.FirstOrDefault(i => i.Id == editing.Id);
+            if (existing == null) return;
+            existing.Name = editing.Name;
+            existing.DefaultUnit = editing.DefaultUnit;
+            existing.GroceryCategoryId = editing.GroceryCategoryId;
+        }
+
+        Db.SaveChanges();
+        editing = null;
+        Load();
+    }
+
+    private void Delete(int id)
+    {
+        var target = Db.GroceryItems.FirstOrDefault(i => i.Id == id);
+        if (target == null) return;
+        Db.GroceryItems.Remove(target);
+        Db.SaveChanges();
+        Load();
+    }
+}

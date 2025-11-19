@@ -1,0 +1,61 @@
+{
+  "Files": [
+    {
+      "Id": "/home/cvre/workspace/indkob/src/Indkob/obj/Debug/net8.0/scopedcss/projectbundle/Indkob.bundle.scp.css",
+      "PackagePath": "staticwebassets/Indkob.bundle.scp.css"
+    },
+    {
+      "Id": "/home/cvre/workspace/indkob/src/Indkob/wwwroot/app.css",
+      "PackagePath": "staticwebassets/app.css"
+    },
+    {
+      "Id": "/home/cvre/workspace/indkob/src/Indkob/wwwroot/bootstrap/bootstrap.min.css",
+      "PackagePath": "staticwebassets/bootstrap/bootstrap.min.css"
+    },
+    {
+      "Id": "/home/cvre/workspace/indkob/src/Indkob/wwwroot/bootstrap/bootstrap.min.css.map",
+      "PackagePath": "staticwebassets/bootstrap/bootstrap.min.css.map"
+    },
+    {
+      "Id": "/home/cvre/workspace/indkob/src/Indkob/wwwroot/favicon.png",
+      "PackagePath": "staticwebassets/favicon.png"
+    },
+    {
+      "Id": "/home/cvre/workspace/indkob/src/Indkob/wwwroot/icons/icon-192.png",
+      "PackagePath": "staticwebassets/icons/icon-192.png"
+    },
+    {
+      "Id": "/home/cvre/workspace/indkob/src/Indkob/wwwroot/icons/icon-512.png",
+      "PackagePath": "staticwebassets/icons/icon-512.png"
+    },
+    {
+      "Id": "/home/cvre/workspace/indkob/src/Indkob/wwwroot/manifest.webmanifest",
+      "PackagePath": "staticwebassets/manifest.webmanifest"
+    },
+    {
+      "Id": "/home/cvre/workspace/indkob/src/Indkob/wwwroot/offline.html",
+      "PackagePath": "staticwebassets/offline.html"
+    },
+    {
+      "Id": "/home/cvre/workspace/indkob/src/Indkob/wwwroot/service-worker.js",
+      "PackagePath": "staticwebassets/service-worker.js"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.Indkob.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.build.Indkob.props",
+      "PackagePath": "build\\Indkob.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.buildMultiTargeting.Indkob.props",
+      "PackagePath": "buildMultiTargeting\\Indkob.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.buildTransitive.Indkob.props",
+      "PackagePath": "buildTransitive\\Indkob.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

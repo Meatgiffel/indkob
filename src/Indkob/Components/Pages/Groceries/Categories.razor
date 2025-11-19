@@ -1,0 +1,125 @@
+@page "/groceries/categories"
+@inject ApplicationDbContext Db
+
+<PageTitle>Grocery Categories</PageTitle>
+
+<h1 class="mb-3">Grocery Categories</h1>
+<p class="text-muted">Categories group items in grocery lists.</p>
+
+<button class="btn btn-primary mb-3" @onclick="StartNew">Add category</button>
+
+@if (!categories.Any())
+{
+    <div class="alert alert-info">No categories yet.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th style="width:120px">Sort order</th>
+                    <th class="text-end" style="width:160px">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var cat in categories)
+                {
+                    <tr>
+                        <td>@cat.Name</td>
+                        <td>@cat.SortOrder</td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-outline-primary me-2" @onclick="() => StartEdit(cat)">Edit</button>
+                            <button class="btn btn-sm btn-outline-danger" @onclick="() => Delete(cat.Id)">Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (editing != null)
+{
+    <div class="card mt-3">
+        <div class="card-header">@(editing.Id == 0 ? "Add category" : "Edit category")</div>
+        <div class="card-body">
+            <EditForm Model="editing" OnValidSubmit="Save">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <div class="mb-3">
+                    <label class="form-label">Name</label>
+                    <InputText class="form-control" @bind-Value="editing.Name" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Sort order</label>
+                    <InputNumber class="form-control" @bind-Value="editing.SortOrder" />
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary" type="submit">Save</button>
+                    <button class="btn btn-secondary" type="button" @onclick="Cancel">Cancel</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    private List<GroceryCategory> categories = new();
+    private GroceryCategory? editing;
+
+    protected override void OnInitialized()
+    {
+        Load();
+    }
+
+    private void Load()
+    {
+        categories = Db.GroceryCategories.OrderBy(c => c.SortOrder).ThenBy(c => c.Name).ToList();
+    }
+
+    private void StartNew()
+    {
+        editing = new GroceryCategory();
+    }
+
+    private void StartEdit(GroceryCategory cat)
+    {
+        editing = new GroceryCategory { Id = cat.Id, Name = cat.Name, SortOrder = cat.SortOrder };
+    }
+
+    private void Cancel()
+    {
+        editing = null;
+    }
+
+    private void Save()
+    {
+        if (editing == null) return;
+        if (editing.Id == 0)
+        {
+            Db.GroceryCategories.Add(editing);
+        }
+        else
+        {
+            var existing = Db.GroceryCategories.FirstOrDefault(c => c.Id == editing.Id);
+            if (existing == null) return;
+            existing.Name = editing.Name;
+            existing.SortOrder = editing.SortOrder;
+        }
+
+        Db.SaveChanges();
+        editing = null;
+        Load();
+    }
+
+    private void Delete(int id)
+    {
+        var target = Db.GroceryCategories.FirstOrDefault(c => c.Id == id);
+        if (target == null) return;
+        Db.GroceryCategories.Remove(target);
+        Db.SaveChanges();
+        Load();
+    }
+}

@@ -1,0 +1,122 @@
+﻿@page "/"
+@using Indkob.Data
+@inject NavigationManager Nav
+@inject ApplicationDbContext Db
+@inject ILogger<Home> Logger
+
+<PageTitle>Dashboard</PageTitle>
+
+<section class="page-heading">
+    <div>
+        <h1>Meal planner & groceries</h1>
+        <p class="text-muted">All users share the same meals, plans, and lists.</p>
+    </div>
+    <div class="actions">
+        <button class="btn btn-primary" @onclick="@(() => Nav.NavigateTo("/planner"))">Plan this week</button>
+        <button class="btn btn-outline-primary" @onclick="@(() => Nav.NavigateTo("/groceries/lists"))">Open grocery lists</button>
+    </div>
+</section>
+
+<div class="dashboard-grid">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div>
+                <strong>Current week plan</strong>
+                <div class="text-muted small">@currentWeekLabel</div>
+            </div>
+            <a href="/planner" class="small">Open planner</a>
+        </div>
+        <div class="card-body">
+            @if (weekEntries.Any())
+            {
+                <div class="planner-mini">
+                    @foreach (var day in weekDays)
+                    {
+                        <div class="mini-day">
+                            <div class="mini-day-name">@day.ToString("ddd dd")</div>
+                            @foreach (var slot in slots)
+                            {
+                                var entry = weekEntries.FirstOrDefault(e => e.Day == day && e.Slot == slot);
+                                <div class="mini-slot">
+                                    <span class="slot-label">@slot</span>
+                                    <span class="slot-value">@(!string.IsNullOrWhiteSpace(entry?.Meal?.Name) ? entry!.Meal!.Name : "—")</span>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="text-muted mb-0">No meals added for this week yet.</p>
+            }
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div>
+                <strong>Grocery lists</strong>
+                <div class="text-muted small">Recent lists</div>
+            </div>
+            <a href="/groceries/lists" class="small">Manage</a>
+        </div>
+        <div class="card-body">
+            @if (recentLists.Any())
+            {
+                <ul class="list-unstyled mb-0">
+                    @foreach (var list in recentLists)
+                    {
+                        <li class="d-flex justify-content-between align-items-center border-bottom py-2">
+                            <div>
+                                <div class="fw-semibold">@list.Name</div>
+                                @if (list.WeekStart.HasValue)
+                                {
+                                    <div class="text-muted small">Week of @list.WeekStart.Value.ToString("yyyy-MM-dd")</div>
+                                }
+                            </div>
+                            <a class="btn btn-sm btn-outline-primary" href=$"/groceries/lists/{list.Id}">Open</a>
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <p class="text-muted mb-0">No grocery lists yet.</p>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<MealPlanEntry> weekEntries = [];
+    private List<GroceryList> recentLists = [];
+    private List<DateOnly> weekDays = [];
+    private readonly MealSlot[] slots = Enum.GetValues<MealSlot>();
+    private string currentWeekLabel = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            var startOfWeek = today.AddDays(-(int)today.DayOfWeek);
+            weekDays = Enumerable.Range(0, 7).Select(i => startOfWeek.AddDays(i)).ToList();
+            currentWeekLabel = $"{startOfWeek:MMM dd} - {startOfWeek.AddDays(6):MMM dd}";
+
+            weekEntries = Db.MealPlanEntries
+                .Include(m => m.Meal)
+                .Where(m => m.Day >= startOfWeek && m.Day <= startOfWeek.AddDays(6))
+                .ToList();
+
+            recentLists = Db.GroceryLists
+                .OrderByDescending(l => l.Id)
+                .Take(5)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load dashboard data");
+        }
+    }
+}

@@ -1,0 +1,224 @@
+@page "/planner"
+@inject ApplicationDbContext Db
+@inject NavigationManager Nav
+
+<PageTitle>Weekly Planner</PageTitle>
+
+<h1 class="mb-3">Weekly Meal Planner</h1>
+<p class="text-muted">Assign meals to any day/slot. All users see and edit the same plan.</p>
+
+<div class="d-flex align-items-center gap-2 mb-3">
+    <button class="btn btn-outline-secondary" @onclick="GoPrevWeek">&laquo; Previous</button>
+    <div class="fw-semibold">Week of @weekStart:yyyy-MM-dd</div>
+    <button class="btn btn-outline-secondary" @onclick="GoNextWeek">Next &raquo;</button>
+</div>
+
+<div class="table-responsive planner-grid">
+    <table class="table align-middle table-bordered">
+        <thead class="table-light">
+            <tr>
+                <th style="width:140px">Slot</th>
+                @foreach (var day in days)
+                {
+                    <th class="text-center">@day:ddd<br />@day:MMM dd</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var slot in slots)
+            {
+                <tr>
+                    <th class="table-light">@slot</th>
+                    @foreach (var day in days)
+                    {
+                        var entry = entries.FirstOrDefault(e => e.Day == day && e.Slot == slot);
+                        <td class="planner-cell">
+                            @if (IsEditing(day, slot))
+                            {
+                                <EditForm Model="planForm" OnValidSubmit="() => SaveEntry(day, slot)">
+                                    <DataAnnotationsValidator />
+                                    <div class="mb-2">
+                                        <label class="form-label">Meal</label>
+                                        <InputSelect class="form-select" @bind-Value="planForm.MealId">
+                                            <option value="">-- none --</option>
+                                            @foreach (var meal in meals)
+                                            {
+                                                <option value="@meal.Id">@meal.Name</option>
+                                            }
+                                        </InputSelect>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">Notes</label>
+                                        <InputTextArea class="form-control" @bind-Value="planForm.Notes" rows="2" />
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">Quick create meal</label>
+                                        <InputText class="form-control" @bind-Value="planForm.QuickMealName" placeholder="e.g., Tacos" />
+                                        <div class="form-text">Creates a meal and assigns it.</div>
+                                    </div>
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <button class="btn btn-sm btn-primary" type="submit">Save</button>
+                                        <button class="btn btn-sm btn-outline-secondary" type="button" @onclick="CancelEdit">Cancel</button>
+                                        @if (entry != null)
+                                        {
+                                            <button class="btn btn-sm btn-outline-danger" type="button" @onclick="() => RemoveEntry(entry)">Remove</button>
+                                        }
+                                    </div>
+                                </EditForm>
+                            }
+                            else
+                            {
+                                <div class="fw-semibold">@entry?.Meal?.Name ?? "No meal"</div>
+                                @if (!string.IsNullOrWhiteSpace(entry?.Notes))
+                                {
+                                    <div class="text-muted small">@entry?.Notes</div>
+                                }
+                                <button class="btn btn-sm btn-outline-primary mt-2" @onclick="() => BeginEdit(day, slot, entry)">@(entry == null ? "Add" : "Edit")</button>
+                            }
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private DateOnly weekStart;
+    private List<DateOnly> days = new();
+    private List<Meal> meals = new();
+    private List<MealPlanEntry> entries = new();
+    private MealSlot[] slots = Enum.GetValues<MealSlot>();
+    private MealPlanForm planForm = new();
+    private (DateOnly day, MealSlot slot)? editing;
+
+    protected override void OnInitialized()
+    {
+        weekStart = GetWeekStartFromUrl() ?? GetStartOfWeek(DateOnly.FromDateTime(DateTime.Today));
+        Refresh();
+    }
+
+    private void Refresh()
+    {
+        days = Enumerable.Range(0, 7).Select(i => weekStart.AddDays(i)).ToList();
+        meals = Db.Meals.OrderBy(m => m.Name).ToList();
+        entries = Db.MealPlanEntries.Include(e => e.Meal)
+            .Where(e => e.Day >= weekStart && e.Day <= weekStart.AddDays(6))
+            .ToList();
+        StateHasChanged();
+    }
+
+    private void GoPrevWeek()
+    {
+        weekStart = weekStart.AddDays(-7);
+        SetQueryWeek();
+        Refresh();
+    }
+
+    private void GoNextWeek()
+    {
+        weekStart = weekStart.AddDays(7);
+        SetQueryWeek();
+        Refresh();
+    }
+
+    private void SetQueryWeek()
+    {
+        Nav.NavigateTo($"/planner?week={weekStart:yyyy-MM-dd}", replace: true);
+    }
+
+    private DateOnly GetStartOfWeek(DateOnly date)
+    {
+        var diff = (int)date.DayOfWeek;
+        return date.AddDays(-diff);
+    }
+
+    private DateOnly? GetWeekStartFromUrl()
+    {
+        var uri = new Uri(Nav.Uri);
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        if (query.TryGetValue("week", out var values) && DateOnly.TryParse(values.FirstOrDefault(), out var parsed))
+        {
+            return GetStartOfWeek(parsed);
+        }
+        return null;
+    }
+
+    private bool IsEditing(DateOnly day, MealSlot slot) => editing?.day == day && editing?.slot == slot;
+
+    private void BeginEdit(DateOnly day, MealSlot slot, MealPlanEntry? entry)
+    {
+        editing = (day, slot);
+        planForm = new MealPlanForm
+        {
+            MealId = entry?.MealId,
+            Notes = entry?.Notes
+        };
+    }
+
+    private void CancelEdit()
+    {
+        editing = null;
+    }
+
+    private void RemoveEntry(MealPlanEntry entry)
+    {
+        Db.MealPlanEntries.Remove(entry);
+        Db.SaveChanges();
+        editing = null;
+        Refresh();
+    }
+
+    private void SaveEntry(DateOnly day, MealSlot slot)
+    {
+        Meal? meal = null;
+        if (!string.IsNullOrWhiteSpace(planForm.QuickMealName))
+        {
+            meal = new Meal { Name = planForm.QuickMealName.Trim() };
+            Db.Meals.Add(meal);
+            Db.SaveChanges();
+            meals.Add(meal);
+            planForm.MealId = meal.Id;
+        }
+        else if (planForm.MealId.HasValue)
+        {
+            meal = meals.FirstOrDefault(m => m.Id == planForm.MealId.Value);
+        }
+
+        var existing = Db.MealPlanEntries.FirstOrDefault(e => e.Day == day && e.Slot == slot);
+
+        if (meal == null && string.IsNullOrWhiteSpace(planForm.Notes))
+        {
+            if (existing != null)
+            {
+                Db.MealPlanEntries.Remove(existing);
+                Db.SaveChanges();
+            }
+            planForm = new MealPlanForm();
+            editing = null;
+            Refresh();
+            return;
+        }
+
+        if (existing == null)
+        {
+            existing = new MealPlanEntry { Day = day, Slot = slot };
+            Db.MealPlanEntries.Add(existing);
+        }
+
+        existing.MealId = planForm.MealId;
+        existing.Notes = planForm.Notes;
+
+        Db.SaveChanges();
+        planForm = new MealPlanForm();
+        editing = null;
+        Refresh();
+    }
+
+    private class MealPlanForm
+    {
+        public int? MealId { get; set; }
+        public string? Notes { get; set; }
+        public string? QuickMealName { get; set; }
+    }
+}
