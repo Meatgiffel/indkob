@@ -55,6 +55,7 @@ else
                         <td>@list.Items.Count</td>
                         <td class="text-end">
                             <a class="btn btn-sm btn-outline-primary" href=$"/groceries/lists/{list.Id}">Open</a>
+                            <button class="btn btn-sm btn-outline-danger ms-2" type="button" @onclick="() => DeleteList(list)">Delete</button>
                         </td>
                     </tr>
                 }
@@ -94,6 +95,13 @@ else
         Db.GroceryLists.Add(list);
         Db.SaveChanges();
         Nav.NavigateTo($"/groceries/lists/{list.Id}");
+    }
+
+    private void DeleteList(GroceryList list)
+    {
+        Db.GroceryLists.Remove(list);
+        Db.SaveChanges();
+        Load();
     }
 
     public class CreateListModel
