@@ -35,7 +35,7 @@
                         <td class="planner-cell">
                             @if (IsEditing(day, slot))
                             {
-                                <EditForm Model="planForm" OnValidSubmit="() => SaveEntry(day, slot)">
+                                <EditForm Model="planForm" OnValidSubmit="() => SaveEntry(day, slot)" autocomplete="off">
                                     <DataAnnotationsValidator />
                                     <div class="mb-2">
                                         <label class="form-label">Meal</label>

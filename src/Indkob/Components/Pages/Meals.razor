@@ -48,7 +48,7 @@ else
     <div class="card mt-4">
         <div class="card-header">@(editing.Id == 0 ? "Add meal" : "Edit meal")</div>
         <div class="card-body">
-            <EditForm Model="editing" OnValidSubmit="SaveMeal">
+            <EditForm Model="editing" OnValidSubmit="SaveMeal" autocomplete="off">
                 <DataAnnotationsValidator />
                 <ValidationSummary />
                 <div class="mb-3">

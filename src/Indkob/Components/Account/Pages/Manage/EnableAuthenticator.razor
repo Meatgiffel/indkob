@@ -49,7 +49,7 @@ else
                 </p>
                 <div class="row">
                     <div class="col-md-6">
-                        <EditForm Model="Input" FormName="send-code" OnValidSubmit="OnValidSubmitAsync" method="post">
+                        <EditForm Model="Input" FormName="send-code" OnValidSubmit="OnValidSubmitAsync" method="post" autocomplete="off">
                             <DataAnnotationsValidator />
                             <div class="form-floating mb-3">
                                 <InputText @bind-Value="Input.Code" class="form-control" autocomplete="off" placeholder="Please enter the code." />

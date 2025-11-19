@@ -26,7 +26,7 @@ else
 
     <div class="card mb-3">
         <div class="card-body">
-            <EditForm Model="listEdit" OnValidSubmit="SaveListMeta">
+            <EditForm Model="listEdit" OnValidSubmit="SaveListMeta" autocomplete="off">
                 <div class="row g-3 align-items-end">
                     <div class="col-md-6">
                         <label class="form-label">List name</label>
@@ -47,7 +47,7 @@ else
     <div class="card mb-4">
         <div class="card-header">Add item</div>
         <div class="card-body">
-            <EditForm Model="itemForm" OnValidSubmit="AddItem">
+            <EditForm Model="itemForm" OnValidSubmit="AddItem" autocomplete="off">
                 <DataAnnotationsValidator />
                 <ValidationSummary />
                 <div class="row g-3">
@@ -137,7 +137,7 @@ else
                             @if (editingItem?.Id == item.Id)
                             {
                                 <div class="mt-3 p-3 bg-light rounded">
-                                    <EditForm Model="editingItem" OnValidSubmit="SaveEdit">
+                                    <EditForm Model="editingItem" OnValidSubmit="SaveEdit" autocomplete="off">
                                         <DataAnnotationsValidator />
                                         <div class="row g-2">
                                             <div class="col-md-3">
