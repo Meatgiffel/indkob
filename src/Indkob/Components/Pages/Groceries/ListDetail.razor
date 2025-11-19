@@ -18,7 +18,10 @@ else
                 <div class="text-muted">Week of @list.WeekStart:yyyy-MM-dd</div>
             }
         </div>
-        <a class="btn btn-outline-secondary" href="/groceries/lists">Back</a>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-secondary" href="/groceries/lists">Back</a>
+            <button class="btn btn-outline-danger" type="button" @onclick="DeleteList">Delete list</button>
+        </div>
     </div>
 
     <div class="card mb-3">
@@ -333,6 +336,14 @@ else
         list.WeekStart = listEdit.WeekStart;
         Db.SaveChanges();
         Load();
+    }
+
+    private void DeleteList()
+    {
+        if (list == null) return;
+        Db.GroceryLists.Remove(list);
+        Db.SaveChanges();
+        Nav.NavigateTo("/groceries/lists");
     }
 
     private class GroceryListItemForm
