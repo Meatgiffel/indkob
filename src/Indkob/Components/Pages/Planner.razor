@@ -13,31 +13,32 @@
     <button class="btn btn-outline-secondary" @onclick="GoNextWeek">Next &raquo;</button>
 </div>
 
-<div class="table-responsive planner-grid">
-    <table class="table align-middle table-bordered">
-        <thead class="table-light">
-            <tr>
-                <th style="width:140px">Slot</th>
-                @foreach (var day in days)
+<div class="planner-board">
+    @foreach (var day in days)
+    {
+        <div class="planner-day">
+            <div class="planner-day__header">
+                <div class="planner-day__name">@day:dddd</div>
+                <div class="planner-day__date">@day:MMM dd</div>
+            </div>
+            <div class="planner-day__slots">
+                @foreach (var slot in slots)
                 {
-                    <th class="text-center">@day:ddd<br />@day:MMM dd</th>
-                }
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var slot in slots)
-            {
-                <tr>
-                    <th class="table-light">@slot</th>
-                    @foreach (var day in days)
-                    {
-                        var entry = entries.FirstOrDefault(e => e.Day == day && e.Slot == slot);
-                        <td class="planner-cell">
+                    var entry = entries.FirstOrDefault(e => e.Day == day && e.Slot == slot);
+                    <div class="slot-card @(IsEditing(day, slot) ? "is-editing" : string.Empty)">
+                        <div class="slot-card__header">
+                            <div class="slot-card__title">@slot</div>
+                            @if (!IsEditing(day, slot) && entry?.Meal != null)
+                            {
+                                <span class="badge text-bg-dark">@entry.Meal.Name</span>
+                            }
+                        </div>
+                        <div class="slot-card__body">
                             @if (IsEditing(day, slot))
                             {
                                 <EditForm Model="planForm" OnValidSubmit="() => SaveEntry(day, slot)">
                                     <DataAnnotationsValidator />
-                                    <div class="mb-2">
+                                    <div class="mb-3">
                                         <label class="form-label">Meal</label>
                                         <InputSelect class="form-select" @bind-Value="planForm.MealId">
                                             <option value="">-- none --</option>
@@ -47,11 +48,11 @@
                                             }
                                         </InputSelect>
                                     </div>
-                                    <div class="mb-2">
+                                    <div class="mb-3">
                                         <label class="form-label">Notes</label>
                                         <InputTextArea class="form-control" @bind-Value="planForm.Notes" rows="2" />
                                     </div>
-                                    <div class="mb-2">
+                                    <div class="mb-3">
                                         <label class="form-label">Quick create meal</label>
                                         <InputText class="form-control" @bind-Value="planForm.QuickMealName" placeholder="e.g., Tacos" />
                                         <div class="form-text">Creates a meal and assigns it.</div>
@@ -68,19 +69,19 @@
                             }
                             else
                             {
-                                <div class="fw-semibold">@entry?.Meal?.Name ?? "No meal"</div>
+                                <div class="slot-card__meal">@entry?.Meal?.Name ?? "No meal yet"</div>
                                 @if (!string.IsNullOrWhiteSpace(entry?.Notes))
                                 {
-                                    <div class="text-muted small">@entry?.Notes</div>
+                                    <div class="slot-card__notes">@entry?.Notes</div>
                                 }
                                 <button class="btn btn-sm btn-outline-primary mt-2" @onclick="() => BeginEdit(day, slot, entry)">@(entry == null ? "Add" : "Edit")</button>
                             }
-                        </td>
-                    }
-                </tr>
-            }
-        </tbody>
-    </table>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
 </div>
 
 @code {

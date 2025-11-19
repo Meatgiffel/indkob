@@ -79,8 +79,24 @@ p, .text-muted { color: var(--muted); }
 
 .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1rem; }
 
-.planner-grid .planner-cell { min-width: 220px; }
-.planner-cell .form-label { font-size: 0.85rem; color: var(--muted); }
+.planner-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+.planner-day { background: #0c1424; border: 1px solid var(--border); border-radius: 14px; padding: 1rem; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25); }
+.planner-day__header { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.75rem; }
+.planner-day__name { font-weight: 700; letter-spacing: 0.02em; }
+.planner-day__date { color: var(--muted); font-size: 0.95rem; }
+.planner-day__slots { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.slot-card { background: #0f192c; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 0.75rem 0.85rem; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+.slot-card:hover { border-color: var(--border); box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25); }
+.slot-card.is-editing { border-color: var(--accent); box-shadow: 0 10px 30px rgba(16, 185, 129, 0.2); }
+.slot-card__header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.35rem; }
+.slot-card__title { font-weight: 700; }
+.slot-card__meal { font-weight: 600; }
+.slot-card__notes { color: var(--muted); font-size: 0.9rem; margin-top: 0.15rem; }
+.slot-card .form-label { font-size: 0.85rem; color: var(--muted); }
+.slot-card .form-text { color: var(--muted); }
+
+.badge.text-bg-dark { background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text); }
 
 .mini-day { background: #0c1424; border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem; margin-bottom: 0.75rem; }
 .mini-day-name { font-weight: 700; margin-bottom: 0.5rem; }
@@ -94,8 +110,7 @@ p, .text-muted { color: var(--muted); }
 .alert-info { background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.4); color: var(--text); }
 
 @media (max-width: 768px) {
-    .planner-grid table { font-size: 0.9rem; }
-    .planner-cell { min-width: 180px; }
+    .planner-board { grid-template-columns: 1fr; }
     .content { padding: 1rem; }
 }
 :root {
