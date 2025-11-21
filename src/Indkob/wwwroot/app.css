@@ -90,7 +90,7 @@ p, .text-muted { color: var(--muted); }
 
 .planner-grid .planner-cell { min-width: 220px; vertical-align: top; background: transparent; border: none; }
 .planner-cell .form-label { font-size: 0.85rem; color: var(--muted); }
-.planner-surface { background: linear-gradient(135deg, rgba(56, 189, 248, 0.04), rgba(16, 185, 129, 0.04)); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; }
+.planner-surface { background: linear-gradient(135deg, rgba(56, 189, 248, 0.04), rgba(16, 185, 129, 0.04)); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); overflow: visible; }
 .table-modern { margin-bottom: 0; border-collapse: separate; border-spacing: 0; }
 .table-modern thead th { background: rgba(12, 20, 36, 0.8); backdrop-filter: blur(6px); border-color: var(--border); padding: 0.85rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--muted); }
 .table-modern tbody td, .table-modern tbody th { border-color: var(--border); padding: 0.9rem; }
