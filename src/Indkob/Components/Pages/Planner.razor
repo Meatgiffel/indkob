@@ -14,73 +14,85 @@
 </div>
 
 <div class="table-responsive planner-grid">
-    <table class="table align-middle table-bordered">
-        <thead class="table-light">
-            <tr>
-                <th style="width:140px">Slot</th>
-                @foreach (var day in days)
-                {
-                    <th class="text-center">@day:ddd<br />@day:MMM dd</th>
-                }
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var slot in slots)
-            {
+    <div class="planner-surface">
+        <table class="table table-modern align-middle">
+            <thead>
                 <tr>
-                    <th class="table-light">@slot</th>
+                    <th class="slot-heading">Slot</th>
                     @foreach (var day in days)
                     {
-                        var entry = entries.FirstOrDefault(e => e.Day == day && e.Slot == slot);
-                        <td class="planner-cell">
-                            @if (IsEditing(day, slot))
-                            {
-                                <EditForm Model="planForm" OnValidSubmit="() => SaveEntry(day, slot)">
-                                    <DataAnnotationsValidator />
-                                    <div class="mb-2">
-                                        <label class="form-label">Meal</label>
-                                        <InputSelect class="form-select" @bind-Value="planForm.MealId">
-                                            <option value="">-- none --</option>
-                                            @foreach (var meal in meals)
-                                            {
-                                                <option value="@meal.Id">@meal.Name</option>
-                                            }
-                                        </InputSelect>
-                                    </div>
-                                    <div class="mb-2">
-                                        <label class="form-label">Notes</label>
-                                        <InputTextArea class="form-control" @bind-Value="planForm.Notes" rows="2" />
-                                    </div>
-                                    <div class="mb-2">
-                                        <label class="form-label">Quick create meal</label>
-                                        <InputText class="form-control" @bind-Value="planForm.QuickMealName" placeholder="e.g., Tacos" />
-                                        <div class="form-text">Creates a meal and assigns it.</div>
-                                    </div>
-                                    <div class="d-flex gap-2 flex-wrap">
-                                        <button class="btn btn-sm btn-primary" type="submit">Save</button>
-                                        <button class="btn btn-sm btn-outline-secondary" type="button" @onclick="CancelEdit">Cancel</button>
-                                        @if (entry != null)
-                                        {
-                                            <button class="btn btn-sm btn-outline-danger" type="button" @onclick="() => RemoveEntry(entry)">Remove</button>
-                                        }
-                                    </div>
-                                </EditForm>
-                            }
-                            else
-                            {
-                                <div class="fw-semibold">@entry?.Meal?.Name ?? "No meal"</div>
-                                @if (!string.IsNullOrWhiteSpace(entry?.Notes))
-                                {
-                                    <div class="text-muted small">@entry?.Notes</div>
-                                }
-                                <button class="btn btn-sm btn-outline-primary mt-2" @onclick="() => BeginEdit(day, slot, entry)">@(entry == null ? "Add" : "Edit")</button>
-                            }
-                        </td>
+                        <th class="text-center">
+                            <div class="planner-day-pill">@day:ddd</div>
+                            <div class="planner-day-date">@day:MMM dd</div>
+                        </th>
                     }
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var slot in slots)
+                {
+                    <tr>
+                        <th class="slot-heading">@slot</th>
+                        @foreach (var day in days)
+                        {
+                            var entry = entries.FirstOrDefault(e => e.Day == day && e.Slot == slot);
+                            <td class="planner-cell">
+                                <div class="cell-card">
+                                    @if (IsEditing(day, slot))
+                                    {
+                                        <EditForm Model="planForm" OnValidSubmit="() => SaveEntry(day, slot)">
+                                            <DataAnnotationsValidator />
+                                            <div class="mb-2">
+                                                <label class="form-label">Meal</label>
+                                                <InputSelect class="form-select" @bind-Value="planForm.MealId">
+                                                    <option value="">-- none --</option>
+                                                    @foreach (var meal in meals)
+                                                    {
+                                                        <option value="@meal.Id">@meal.Name</option>
+                                                    }
+                                                </InputSelect>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label">Notes</label>
+                                                <InputTextArea class="form-control" @bind-Value="planForm.Notes" rows="2" />
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label">Quick create meal</label>
+                                                <InputText class="form-control" @bind-Value="planForm.QuickMealName" placeholder="e.g., Tacos" />
+                                                <div class="form-text">Creates a meal and assigns it.</div>
+                                            </div>
+                                            <div class="d-flex gap-2 flex-wrap">
+                                                <button class="btn btn-sm btn-primary" type="submit">Save</button>
+                                                <button class="btn btn-sm btn-outline-secondary" type="button" @onclick="CancelEdit">Cancel</button>
+                                                @if (entry != null)
+                                                {
+                                                    <button class="btn btn-sm btn-outline-danger" type="button" @onclick="() => RemoveEntry(entry)">Remove</button>
+                                                }
+                                            </div>
+                                        </EditForm>
+                                    }
+                                    else
+                                    {
+                                        <div class="d-flex align-items-start justify-content-between gap-2">
+                                            <div>
+                                                <div class="fw-semibold">@entry?.Meal?.Name ?? "No meal"</div>
+                                                @if (!string.IsNullOrWhiteSpace(entry?.Notes))
+                                                {
+                                                    <div class="text-muted small">@entry?.Notes</div>
+                                                }
+                                            </div>
+                                            <div class="planner-chip @(entry == null ? "chip-empty" : "")">@(entry == null ? "Open" : "Planned")</div>
+                                        </div>
+                                        <button class="btn btn-sm btn-outline-primary mt-3 w-100" @onclick="() => BeginEdit(day, slot, entry)">@(entry == null ? "Add meal" : "Edit details")</button>
+                                    }
+                                </div>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 </div>
 
 @code {

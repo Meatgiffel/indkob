@@ -79,8 +79,21 @@ p, .text-muted { color: var(--muted); }
 
 .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1rem; }
 
-.planner-grid .planner-cell { min-width: 220px; }
+.planner-grid .planner-cell { min-width: 220px; vertical-align: top; background: transparent; border: none; }
 .planner-cell .form-label { font-size: 0.85rem; color: var(--muted); }
+.planner-surface { background: linear-gradient(135deg, rgba(56, 189, 248, 0.04), rgba(16, 185, 129, 0.04)); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; }
+.table-modern { margin-bottom: 0; border-collapse: separate; border-spacing: 0; }
+.table-modern thead th { background: rgba(12, 20, 36, 0.8); backdrop-filter: blur(6px); border-color: var(--border); padding: 0.85rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--muted); }
+.table-modern tbody td, .table-modern tbody th { border-color: var(--border); padding: 0.9rem; }
+.table-modern tbody tr:nth-child(odd) td, .table-modern tbody tr:nth-child(odd) th { background: rgba(12, 20, 36, 0.6); }
+.table-modern tbody tr:nth-child(even) td, .table-modern tbody tr:nth-child(even) th { background: rgba(10, 16, 28, 0.7); }
+.slot-heading { width: 140px; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em; color: var(--muted); }
+.planner-day-pill { display: inline-block; padding: 0.35rem 0.75rem; background: rgba(56, 189, 248, 0.12); border-radius: 999px; color: #c6e2ff; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+.planner-day-date { color: var(--text); font-weight: 600; margin-top: 0.15rem; }
+.cell-card { background: #0b1220; border: 1px solid rgba(148, 163, 184, 0.12); border-radius: 14px; padding: 0.75rem; min-height: 120px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 10px 30px rgba(0, 0, 0, 0.25); }
+.cell-card .form-text { color: var(--muted); }
+.planner-chip { padding: 0.35rem 0.7rem; border-radius: 999px; background: rgba(16, 185, 129, 0.12); color: var(--accent); font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.planner-chip.chip-empty { background: rgba(239, 68, 68, 0.12); color: #fca5a5; }
 
 .mini-day { background: #0c1424; border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem; margin-bottom: 0.75rem; }
 .mini-day-name { font-weight: 700; margin-bottom: 0.5rem; }
