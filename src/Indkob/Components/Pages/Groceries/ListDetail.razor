@@ -30,7 +30,7 @@ else
                 <div class="row g-3 align-items-end">
                     <div class="col-md-6">
                         <label class="form-label">List name</label>
-                        <InputText class="form-control" @bind-Value="listEdit.Name" />
+                        <InputText class="form-control" @bind-Value="listEdit.Name" autocomplete="off" />
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Week start</label>
@@ -53,7 +53,7 @@ else
                 <div class="row g-3">
                     <div class="col-md-4">
                         <label class="form-label">Name</label>
-                        <InputText class="form-control" @bind-Value="itemForm.Name" />
+                        <InputText class="form-control" @bind-Value="itemForm.Name" autocomplete="off" />
                     </div>
                     <div class="col-md-2">
                         <label class="form-label">Quantity</label>
@@ -61,7 +61,7 @@ else
                     </div>
                     <div class="col-md-2">
                         <label class="form-label">Unit</label>
-                        <InputText class="form-control" @bind-Value="itemForm.Unit" />
+                        <InputText class="form-control" @bind-Value="itemForm.Unit" autocomplete="off" />
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Saved item (optional)</label>
@@ -88,7 +88,7 @@ else
                     </div>
                     <div class="col-md-8">
                         <label class="form-label">Notes</label>
-                        <InputText class="form-control" @bind-Value="itemForm.Notes" />
+                        <InputText class="form-control" @bind-Value="itemForm.Notes" autocomplete="off" />
                     </div>
                 </div>
                 <div class="mt-3 d-flex gap-2">
@@ -141,13 +141,13 @@ else
                                         <DataAnnotationsValidator />
                                         <div class="row g-2">
                                             <div class="col-md-3">
-                                                <InputText class="form-control" @bind-Value="editingItem!.Name" />
+                                                <InputText class="form-control" @bind-Value="editingItem!.Name" autocomplete="off" />
                                             </div>
                                             <div class="col-md-2">
                                                 <InputNumber class="form-control" @bind-Value="editingItem!.Quantity" />
                                             </div>
                                             <div class="col-md-2">
-                                                <InputText class="form-control" @bind-Value="editingItem!.Unit" />
+                                                <InputText class="form-control" @bind-Value="editingItem!.Unit" autocomplete="off" />
                                             </div>
                                             <div class="col-md-3">
                                                 <InputSelect class="form-select" @bind-Value="editingItem!.GroceryCategoryId">
@@ -159,7 +159,7 @@ else
                                                 </InputSelect>
                                             </div>
                                             <div class="col-md-12">
-                                                <InputText class="form-control" @bind-Value="editingItem!.Notes" placeholder="Notes" />
+                                                <InputText class="form-control" @bind-Value="editingItem!.Notes" placeholder="Notes" autocomplete="off" />
                                             </div>
                                         </div>
                                         <div class="mt-2 d-flex gap-2">
