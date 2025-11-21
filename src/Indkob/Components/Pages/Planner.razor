@@ -4,13 +4,24 @@
 
 <PageTitle>Weekly Planner</PageTitle>
 
-<h1 class="mb-3">Weekly Meal Planner</h1>
-<p class="text-muted">Assign meals to any day/slot. All users see and edit the same plan.</p>
-
-<div class="d-flex align-items-center gap-2 mb-3">
-    <button class="btn btn-outline-secondary" @onclick="GoPrevWeek">&laquo; Previous</button>
-    <div class="fw-semibold">Week of @weekStart:yyyy-MM-dd</div>
-    <button class="btn btn-outline-secondary" @onclick="GoNextWeek">Next &raquo;</button>
+<div class="planner-hero">
+    <div>
+        <div class="eyebrow">Planning</div>
+        <h1 class="mb-1">Weekly Meal Planner</h1>
+        <p class="text-muted mb-0">Assign meals to any day/slot. All users see and edit the same plan.</p>
+    </div>
+    <div class="planner-toolbar">
+        <div class="week-pill">Week of @weekStart:yyyy-MM-dd</div>
+        <div class="toolbar-actions">
+            <button class="btn btn-outline-secondary" @onclick="GoPrevWeek">&laquo; Previous</button>
+            <button class="btn btn-outline-secondary" @onclick="GoNextWeek">Next &raquo;</button>
+        </div>
+    </div>
+    <div class="planner-legend">
+        <span class="legend-chip legend-filled">Planned</span>
+        <span class="legend-chip legend-open">Open</span>
+        <span class="legend-chip legend-action">Click a cell to add or edit</span>
+    </div>
 </div>
 
 <div class="table-responsive planner-grid">
@@ -73,17 +84,22 @@
                                     }
                                     else
                                     {
-                                        <div class="d-flex align-items-start justify-content-between gap-2">
-                                            <div>
-                                                <div class="fw-semibold">@entry?.Meal?.Name ?? "No meal"</div>
-                                                @if (!string.IsNullOrWhiteSpace(entry?.Notes))
-                                                {
-                                                    <div class="text-muted small">@entry?.Notes</div>
-                                                }
-                                            </div>
+                                        <div class="cell-head">
                                             <div class="planner-chip @(entry == null ? "chip-empty" : "")">@(entry == null ? "Open" : "Planned")</div>
+                                            <button class="btn btn-ghost" @onclick="() => BeginEdit(day, slot, entry)">@(entry == null ? "Add" : "Edit")</button>
                                         </div>
-                                        <button class="btn btn-sm btn-outline-primary mt-3 w-100" @onclick="() => BeginEdit(day, slot, entry)">@(entry == null ? "Add meal" : "Edit details")</button>
+                                        <div class="cell-body">
+                                            <div class="cell-title">@entry?.Meal?.Name ?? "No meal chosen"</div>
+                                            @if (!string.IsNullOrWhiteSpace(entry?.Notes))
+                                            {
+                                                <div class="cell-notes">@entry?.Notes</div>
+                                            }
+                                            else
+                                            {
+                                                <div class="cell-notes text-muted">Tap edit to add notes or quick-create a meal.</div>
+                                            }
+                                        </div>
+                                        <button class="btn btn-sm btn-outline-primary mt-3 w-100" @onclick="() => BeginEdit(day, slot, entry)">@(entry == null ? "Plan this meal" : "Update details")</button>
                                     }
                                 </div>
                             </td>
