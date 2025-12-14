@@ -29,6 +29,37 @@ if [[ "$(id -u)" -ne 0 ]]; then
   exit 1
 fi
 
+install_first_available() {
+  for pkg in "$@"; do
+    if DEBIAN_FRONTEND=noninteractive apt-get install -y "$pkg" >/dev/null 2>&1; then
+      echo "Installed: $pkg"
+      return 0
+    fi
+  done
+  return 1
+}
+
+maybe_install_dotnet_deps() {
+  if ! command -v apt-get >/dev/null 2>&1; then
+    return 0
+  fi
+
+  # Only run apt-get update if something looks missing.
+  local need_update="false"
+  dpkg -s zlib1g >/dev/null 2>&1 || need_update="true"
+  (ldconfig -p 2>/dev/null | grep -q 'libicu') || need_update="true"
+  (ldconfig -p 2>/dev/null | grep -q 'libssl') || need_update="true"
+
+  if [[ "${need_update}" == "true" ]]; then
+    DEBIAN_FRONTEND=noninteractive apt-get update >/dev/null 2>&1 || true
+    DEBIAN_FRONTEND=noninteractive apt-get install -y zlib1g >/dev/null 2>&1 || true
+    install_first_available libicu76 libicu75 libicu74 libicu73 libicu72 libicu71 libicu70 libicu67 libicu-dev || true
+    install_first_available libssl3 libssl1.1 libssl-dev || true
+  fi
+}
+
+maybe_install_dotnet_deps
+
 install -d -m 0755 "${RELEASES_DIR}" "${DATA_DIR}" "${BUNDLE_DIR}"
 install -d -m 0755 /var/www
 
@@ -58,6 +89,13 @@ if id indkob >/dev/null 2>&1; then
   chown -R indkob:indkob "${DATA_DIR}" || true
   chown -R indkob:indkob "${BUNDLE_DIR}" || true
 fi
+
+# Ensure the single-file bundle can extract to a writable path (works even if the unit file is old).
+install -d -m 0755 /etc/systemd/system/indkob-api.service.d
+cat >/etc/systemd/system/indkob-api.service.d/override.conf <<'EOF'
+[Service]
+Environment=DOTNET_BUNDLE_EXTRACT_BASE_DIR=/var/lib/indkob/bundle-extract
+EOF
 
 systemctl daemon-reload || true
 systemctl restart indkob-api || true
