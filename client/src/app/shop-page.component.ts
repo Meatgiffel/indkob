@@ -55,7 +55,7 @@ export class ShopPageComponent implements OnInit {
   get groupedEntries(): { area: string; entries: GroceryEntry[] }[] {
     const groups = new Map<string, GroceryEntry[]>();
     for (const entry of this.visibleEntries) {
-      const key = entry.itemArea || 'Andet';
+      const key = entry.itemId ? entry.itemArea || 'Andet' : 'Noter';
       if (!groups.has(key)) {
         groups.set(key, []);
       }
@@ -67,7 +67,9 @@ export class ShopPageComponent implements OnInit {
       .map(([area, entries]) => ({
         area,
         entries: [...entries].sort(
-          (a, b) => Number(a.isDone) - Number(b.isDone) || a.itemName.localeCompare(b.itemName, 'da', { sensitivity: 'base' })
+          (a, b) =>
+            Number(a.isDone) - Number(b.isDone) ||
+            (a.itemId ? (a.itemName ?? '') : (a.note ?? '')).localeCompare(b.itemId ? (b.itemName ?? '') : (b.note ?? ''), 'da', { sensitivity: 'base' })
         )
       }));
   }
@@ -98,8 +100,8 @@ export class ShopPageComponent implements OnInit {
       await firstValueFrom(
         this.api.updateEntry(entry.id, {
           itemId: entry.itemId,
-          amount: entry.amount ?? '',
-          note: entry.note ?? '',
+          amount: entry.amount ?? null,
+          note: entry.note ?? null,
           isDone: entry.isDone
         })
       );

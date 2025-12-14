@@ -39,6 +39,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasOne(e => e.Item)
                 .WithMany(i => i.GroceryEntries)
                 .HasForeignKey(e => e.ItemId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }

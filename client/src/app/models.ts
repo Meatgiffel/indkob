@@ -6,9 +6,9 @@ export interface Item {
 
 export interface GroceryEntry {
   id: number;
-  itemId: number;
-  itemName: string;
-  itemArea: string;
+  itemId: number | null;
+  itemName: string | null;
+  itemArea: string | null;
   amount?: string | null;
   note?: string | null;
   isDone: boolean;
@@ -21,7 +21,7 @@ export interface CreateItemPayload {
 }
 
 export interface CreateEntryPayload {
-  itemId: number;
+  itemId: number | null;
   amount?: string | null;
   note?: string | null;
 }

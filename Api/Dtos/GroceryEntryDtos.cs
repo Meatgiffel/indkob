@@ -4,9 +4,9 @@ namespace Api.Dtos;
 
 public record GroceryEntryDto(
     int Id,
-    int ItemId,
-    string ItemName,
-    string ItemArea,
+    int? ItemId,
+    string? ItemName,
+    string? ItemArea,
     string? Amount,
     string? Note,
     bool IsDone,
@@ -14,8 +14,8 @@ public record GroceryEntryDto(
 
 public class CreateGroceryEntryRequest
 {
-    [Required, Range(1, int.MaxValue)]
-    public int ItemId { get; set; }
+    [Range(1, int.MaxValue)]
+    public int? ItemId { get; set; }
 
     [MaxLength(64)]
     public string? Amount { get; set; }

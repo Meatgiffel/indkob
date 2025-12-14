@@ -42,8 +42,14 @@
                 <ng-template #placeholder>Vælg vare</ng-template>
               </ng-template>
             </p-autoComplete>
-            <small *ngIf="entryForm.controls.itemId.invalid && entryForm.controls.itemId.touched" class="error">
-              Vælg en vare
+            <small
+              *ngIf="
+                entryForm.hasError('missingItemOrNote') &&
+                (entryForm.controls.itemId.touched || entryForm.controls.note.touched || entryForm.controls.amount.touched)
+              "
+              class="error"
+            >
+              Vælg en vare eller skriv en note
             </small>
             <p class="hint">Tip: skriv område eller varetype, fx “mejeri” eller “brød”.</p>
             <div class="create-inline" *ngIf="searchTerm && searchTerm !== lastSelectedTerm">
@@ -79,7 +85,7 @@
             </div>
             <div>
               <label for="note">Note</label>
-              <input pInputText id="note" formControlName="note" placeholder="fx Øko, mærke" />
+              <input pInputText id="note" formControlName="note" placeholder="fx Øko, mærke — eller en ren note" />
             </div>
           </div>
           <div class="field checkbox" *ngIf="editingEntryId">
@@ -132,10 +138,10 @@
                 <div class="check-badge" [class.done]="entry.isDone"><i class="pi" [ngClass]="entry.isDone ? 'pi-check' : 'pi-circle'"></i></div>
                 <div class="row-main">
                   <div class="row-top">
-                    <div class="entry-name">{{ entry.itemName }}</div>
+                    <div class="entry-name">{{ entry.itemId ? entry.itemName : entry.note }}</div>
                     <div class="inline-meta">
                       <span *ngIf="entry.amount" class="tiny-chip">{{ entry.amount }}</span>
-                      <span *ngIf="entry.note" class="tiny-chip">{{ entry.note }}</span>
+                      <span *ngIf="entry.note && entry.itemId" class="tiny-chip">{{ entry.note }}</span>
                     </div>
                   </div>
                 </div>

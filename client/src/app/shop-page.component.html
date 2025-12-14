@@ -43,10 +43,10 @@
           >
             <div class="check" [class.done]="entry.isDone"><i class="pi" [ngClass]="entry.isDone ? 'pi-check' : 'pi-circle'"></i></div>
             <div class="main">
-              <div class="name">{{ entry.itemName }}</div>
-              <div class="meta" *ngIf="entry.amount || entry.note">
+              <div class="name">{{ entry.itemId ? entry.itemName : entry.note }}</div>
+              <div class="meta" *ngIf="entry.amount || (entry.note && entry.itemId)">
                 <span *ngIf="entry.amount">{{ entry.amount }}</span>
-                <span *ngIf="entry.note">{{ entry.note }}</span>
+                <span *ngIf="entry.note && entry.itemId">{{ entry.note }}</span>
               </div>
             </div>
           </div>

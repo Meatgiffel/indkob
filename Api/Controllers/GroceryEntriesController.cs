@@ -4,6 +4,7 @@ using Api.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 namespace Api.Controllers;
 
@@ -17,21 +18,25 @@ public class GroceryEntriesController(AppDbContext db) : ControllerBase
     {
         var entries = await db.GroceryEntries
             .AsNoTracking()
-            .OrderBy(e => e.IsDone)
-            .ThenBy(e => e.Item!.Area)
-            .ThenBy(e => e.Item!.Name)
             .Select(e => new GroceryEntryDto(
                 e.Id,
                 e.ItemId,
-                e.Item!.Name,
-                e.Item.Area,
+                e.Item != null ? e.Item.Name : null,
+                e.Item != null ? e.Item.Area : null,
                 e.Amount,
                 e.Note,
                 e.IsDone,
                 e.CreatedAt))
             .ToListAsync();
 
-        return Ok(entries);
+        var comparer = StringComparer.Create(new CultureInfo("da-DK"), ignoreCase: true);
+        var ordered = entries
+            .OrderBy(e => e.IsDone)
+            .ThenBy(e => e.ItemId is null ? "Noter" : (e.ItemArea ?? "Andet"), comparer)
+            .ThenBy(e => e.ItemId is null ? (e.Note ?? string.Empty) : (e.ItemName ?? string.Empty), comparer)
+            .ToList();
+
+        return Ok(ordered);
     }
 
     [HttpGet("{id:int}")]
@@ -43,8 +48,8 @@ public class GroceryEntriesController(AppDbContext db) : ControllerBase
             .Select(e => new GroceryEntryDto(
                 e.Id,
                 e.ItemId,
-                e.Item!.Name,
-                e.Item.Area,
+                e.Item != null ? e.Item.Name : null,
+                e.Item != null ? e.Item.Area : null,
                 e.Amount,
                 e.Note,
                 e.IsDone,
@@ -57,7 +62,32 @@ public class GroceryEntriesController(AppDbContext db) : ControllerBase
     [HttpPost]
     public async Task<ActionResult<GroceryEntryDto>> Create([FromBody] CreateGroceryEntryRequest request)
     {
-        var item = await db.Items.FindAsync(request.ItemId);
+        var amount = request.Amount?.Trim();
+        var note = request.Note?.Trim();
+
+        if (request.ItemId is null)
+        {
+            if (string.IsNullOrWhiteSpace(note))
+            {
+                return ValidationProblem("Either an item must be selected or a note must be provided.");
+            }
+
+            var noteEntry = new GroceryEntry
+            {
+                ItemId = null,
+                Amount = string.IsNullOrWhiteSpace(amount) ? null : amount,
+                Note = note,
+                IsDone = false
+            };
+
+            db.GroceryEntries.Add(noteEntry);
+            await db.SaveChangesAsync();
+
+            var noteDto = new GroceryEntryDto(noteEntry.Id, null, null, null, noteEntry.Amount, noteEntry.Note, noteEntry.IsDone, noteEntry.CreatedAt);
+            return CreatedAtAction(nameof(GetById), new { id = noteEntry.Id }, noteDto);
+        }
+
+        var item = await db.Items.FindAsync(request.ItemId.Value);
         if (item is null)
         {
             return NotFound(new ProblemDetails
@@ -70,8 +100,8 @@ public class GroceryEntriesController(AppDbContext db) : ControllerBase
         var entry = new GroceryEntry
         {
             ItemId = item.Id,
-            Amount = request.Amount?.Trim(),
-            Note = request.Note?.Trim(),
+            Amount = string.IsNullOrWhiteSpace(amount) ? null : amount,
+            Note = string.IsNullOrWhiteSpace(note) ? null : note,
             IsDone = false
         };
 
@@ -91,7 +121,28 @@ public class GroceryEntriesController(AppDbContext db) : ControllerBase
             return NotFound();
         }
 
-        var item = await db.Items.FindAsync(request.ItemId);
+        var amount = request.Amount?.Trim();
+        var note = request.Note?.Trim();
+
+        if (request.ItemId is null)
+        {
+            if (string.IsNullOrWhiteSpace(note))
+            {
+                return ValidationProblem("A note is required when no item is selected.");
+            }
+
+            entry.ItemId = null;
+            entry.Amount = string.IsNullOrWhiteSpace(amount) ? null : amount;
+            entry.Note = note;
+            entry.IsDone = request.IsDone;
+
+            await db.SaveChangesAsync();
+
+            var noteDto = new GroceryEntryDto(entry.Id, null, null, null, entry.Amount, entry.Note, entry.IsDone, entry.CreatedAt);
+            return Ok(noteDto);
+        }
+
+        var item = await db.Items.FindAsync(request.ItemId.Value);
         if (item is null)
         {
             return NotFound(new ProblemDetails
@@ -102,8 +153,8 @@ public class GroceryEntriesController(AppDbContext db) : ControllerBase
         }
 
         entry.ItemId = item.Id;
-        entry.Amount = request.Amount?.Trim();
-        entry.Note = request.Note?.Trim();
+        entry.Amount = string.IsNullOrWhiteSpace(amount) ? null : amount;
+        entry.Note = string.IsNullOrWhiteSpace(note) ? null : note;
         entry.IsDone = request.IsDone;
 
         await db.SaveChangesAsync();

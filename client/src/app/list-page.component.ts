@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormsModule, ReactiveFormsModule, ValidationErrors } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { DropdownModule } from 'primeng/dropdown';
 import { AutoCompleteModule } from 'primeng/autocomplete';
@@ -57,12 +57,15 @@ export class ListPageComponent implements OnInit {
   savingEntry = false;
   editingEntryId: number | null = null;
 
-  entryForm = this.fb.group({
-    itemId: [null as number | null, Validators.required],
-    amount: [''],
-    note: [''],
-    isDone: [false]
-  });
+  entryForm = this.fb.group(
+    {
+      itemId: [null as number | null],
+      amount: [''],
+      note: [''],
+      isDone: [false]
+    },
+    { validators: [requireItemOrNote] }
+  );
 
   constructor(
     private fb: FormBuilder,
@@ -107,8 +110,8 @@ export class ListPageComponent implements OnInit {
       note: entry.note ?? '',
       isDone: entry.isDone
     });
-    this.searchTerm = entry.itemName;
-    this.lastSelectedTerm = entry.itemName;
+    this.searchTerm = entry.itemName ?? '';
+    this.lastSelectedTerm = entry.itemName ?? '';
   }
 
   cancelEntryEdit(): void {
@@ -126,13 +129,16 @@ export class ListPageComponent implements OnInit {
 
     this.savingEntry = true;
     const payload = this.entryForm.value;
+    const itemId = payload.itemId ?? null;
+    const amount = (payload.amount ?? '').trim();
+    const note = (payload.note ?? '').trim();
     try {
       if (this.editingEntryId) {
         await firstValueFrom(
           this.api.updateEntry(this.editingEntryId, {
-            itemId: payload.itemId!,
-            amount: (payload.amount ?? '').trim(),
-            note: (payload.note ?? '').trim(),
+            itemId,
+            amount: amount || null,
+            note: note || null,
             isDone: payload.isDone ?? false
           })
         );
@@ -140,12 +146,16 @@ export class ListPageComponent implements OnInit {
       } else {
         await firstValueFrom(
           this.api.createEntry({
-            itemId: payload.itemId!,
-            amount: (payload.amount ?? '').trim(),
-            note: (payload.note ?? '').trim()
+            itemId,
+            amount: amount || null,
+            note: note || null
           })
         );
-        this.toast.add({ severity: 'success', summary: 'Tilføjet', detail: 'Vare tilføjet til listen.' });
+        this.toast.add({
+          severity: 'success',
+          summary: 'Tilføjet',
+          detail: itemId ? 'Vare tilføjet til listen.' : 'Note tilføjet til listen.'
+        });
       }
       await this.loadEntries();
       this.cancelEntryEdit();
@@ -161,8 +171,8 @@ export class ListPageComponent implements OnInit {
       await firstValueFrom(
         this.api.updateEntry(entry.id, {
           itemId: entry.itemId,
-          amount: entry.amount ?? '',
-          note: entry.note ?? '',
+          amount: entry.amount ?? null,
+          note: entry.note ?? null,
           isDone: !entry.isDone
         })
       );
@@ -173,7 +183,7 @@ export class ListPageComponent implements OnInit {
   }
 
   async deleteEntry(entry: GroceryEntry): Promise<void> {
-    const confirmation = window.confirm(`Fjern "${entry.itemName}" fra listen?`);
+    const confirmation = window.confirm(entry.itemId ? `Fjern "${entry.itemName}" fra listen?` : 'Fjern noten fra listen?');
     if (!confirmation) {
       return;
     }
@@ -203,7 +213,7 @@ export class ListPageComponent implements OnInit {
   get groupedEntries(): { area: string; entries: GroceryEntry[]; openCount: number; doneCount: number }[] {
     const groups = new Map<string, GroceryEntry[]>();
     for (const entry of this.visibleEntries) {
-      const key = entry.itemArea || 'Andet';
+      const key = entry.itemId ? entry.itemArea || 'Andet' : 'Noter';
       if (!groups.has(key)) {
         groups.set(key, []);
       }
@@ -214,7 +224,9 @@ export class ListPageComponent implements OnInit {
       .sort((a, b) => a[0].localeCompare(b[0], 'da', { sensitivity: 'base' }))
       .map(([area, entries]) => {
         const sorted = [...entries].sort(
-          (a, b) => Number(a.isDone) - Number(b.isDone) || a.itemName.localeCompare(b.itemName, 'da', { sensitivity: 'base' })
+          (a, b) =>
+            Number(a.isDone) - Number(b.isDone) ||
+            (a.itemId ? (a.itemName ?? '') : (a.note ?? '')).localeCompare(b.itemId ? (b.itemName ?? '') : (b.note ?? ''), 'da', { sensitivity: 'base' })
         );
         const openCount = sorted.filter(e => !e.isDone).length;
         return { area, entries: sorted, openCount, doneCount: sorted.length - openCount };
@@ -317,4 +329,14 @@ export class ListPageComponent implements OnInit {
     this.areaOptions = Array.from(new Set(this.items.map(item => item.area).filter(Boolean))).sort();
     this.filteredAreas = this.areaOptions.slice(0, 8);
   }
+}
+
+function requireItemOrNote(control: AbstractControl): ValidationErrors | null {
+  const value = control.value as { itemId: number | null; note: string };
+  const note = (value?.note ?? '').trim();
+  const hasItem = !!value?.itemId;
+  if (hasItem || note.length > 0) {
+    return null;
+  }
+  return { missingItemOrNote: true };
 }
