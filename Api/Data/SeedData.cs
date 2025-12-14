@@ -329,16 +329,17 @@ public static class SeedData
             userName = "admin";
         }
 
-        var password = (config.GetValue<string>("Auth:BootstrapPassword") ?? string.Empty).Trim();
+        var password = (config.GetValue<string>("Auth:BootstrapPassword") ?? "changeme").Trim();
         if (string.IsNullOrWhiteSpace(password))
         {
-            password = GenerateRandomPassword();
-            logger.LogWarning(
-                "BOOTSTRAP ADMIN CREATED. Username: {UserName} Password: {Password} (change it in the Users page).",
-                userName,
-                password
-            );
+            password = "changeme";
         }
+
+        logger.LogWarning(
+            "BOOTSTRAP ADMIN CREATED. Username: {UserName} Password: {Password} (change it in the Users page).",
+            userName,
+            password
+        );
 
         var user = new Models.User
         {
@@ -359,12 +360,5 @@ public static class SeedData
 
     private static string NormalizeUserName(string userName) => userName.Trim().ToLowerInvariant();
 
-    private static string GenerateRandomPassword()
-    {
-        var bytes = RandomNumberGenerator.GetBytes(18);
-        return Convert.ToBase64String(bytes)
-            .Replace('+', '-')
-            .Replace('/', '_')
-            .TrimEnd('=');
-    }
+    // Intentionally not generating a random default password; see README/login section.
 }

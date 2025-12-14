@@ -79,7 +79,7 @@ Alternativt (nemmere at huske):
 ## Login
 Første gang API’et starter på en helt ny database, opretter den automatisk en admin-bruger:
 - Brugernavn: `admin` (kan ændres)
-- Password: genereres og logges i `journalctl` (medmindre du sætter det selv)
+- Password: `changeme` (skift det med det samme i “Brugere”)
 
 Sæt selv bootstrap-login (valgfrit) ved at sætte environment variables på `indkob-api` servicen:
 - `Auth__BootstrapUser`
