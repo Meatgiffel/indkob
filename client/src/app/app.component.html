@@ -1,0 +1,45 @@
+<p-toast position="top-right"></p-toast>
+
+<div class="app-shell">
+  <div class="halo"></div>
+
+  <div class="frame">
+    <p-toolbar class="app-toolbar">
+      <div class="toolbar-left">
+        <div class="logo">
+          <img src="assets/logo.png" alt="Indkøb logo" />
+        </div>
+        <div class="brand-block">
+          <span class="brand">Indkøb</span>
+          <span class="muted">Delt indkøbsseddel • Offline-klar</span>
+        </div>
+      </div>
+      <div class="toolbar-right">
+        <p-tag severity="success" icon="pi pi-bolt" value="Live opdateringer"></p-tag>
+        <p-tag severity="info" icon="pi pi-cloud-download" value="PWA klar"></p-tag>
+        <button pButton type="button" label="Handle" icon="pi pi-shopping-cart" [routerLink]="['/shop']"></button>
+      </div>
+    </p-toolbar>
+
+    <div class="layout">
+      <nav class="side-nav surface-card">
+        <a class="nav-link" [routerLink]="['/list']" routerLinkActive="active">
+          <i class="pi pi-list-check"></i>
+          <span class="nav-label">Opret liste</span>
+        </a>
+        <a class="nav-link" [routerLink]="['/shop']" routerLinkActive="active">
+          <i class="pi pi-shopping-cart"></i>
+          <span class="nav-label">Handle</span>
+        </a>
+        <a class="nav-link" [routerLink]="['/items']" routerLinkActive="active">
+          <i class="pi pi-tag"></i>
+          <span class="nav-label">Vare-katalog</span>
+        </a>
+      </nav>
+
+      <div class="content-shell">
+        <router-outlet></router-outlet>
+      </div>
+    </div>
+  </div>
+</div>

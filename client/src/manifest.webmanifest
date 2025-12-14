@@ -1,0 +1,17 @@
+{
+  "name": "Indkøb – delt indkøbsseddel",
+  "short_name": "Indkøb",
+  "theme_color": "#2563eb",
+  "background_color": "#f6f8fb",
+  "display": "standalone",
+  "scope": "./",
+  "start_url": "./",
+  "icons": [
+    {
+      "src": "assets/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

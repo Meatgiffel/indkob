@@ -1,0 +1,68 @@
+# Indkøb
+
+> Disclaimer: Alt kode i dette repository er lavet af AI.
+
+Indkøb er en lille PWA til en delt indkøbsliste. Du vedligeholder et varekatalog (navn + område i butikken), opretter linjer til indkøbssedlen og kan krydse af på mobilen, når du står i butikken.
+
+## Funktioner
+- Varekatalog med hurtig oprettelse og inline redigering.
+- Indkøbsseddel der grupperer efter område.
+- “Handle”-visning der prioriterer tæt liste og touch.
+- PWA (offline-klar), PrimeNG UI.
+
+## Teknologi
+- Frontend: Angular (standalone) + PrimeNG/PrimeFlex (`client/`).
+- Backend: ASP.NET Core + EF Core + SQLite (`Api/`).
+
+## Kør lokalt
+### API
+```bash
+cd Api
+dotnet restore
+dotnet tool install --global dotnet-ef   # hvis du ikke allerede har den
+dotnet ef database update
+dotnet run
+```
+
+### Client
+```bash
+cd client
+npm install
+npm start
+# http://localhost:4200
+```
+
+## Deployment til LXC (anbefalet)
+Setup’et her gør, at din LXC ikke behøver Node eller .NET. GitHub Actions bygger en release, og LXC downloader bare seneste bundle og genstarter services.
+
+### 1) Lav en release
+Workflowet i `.github/workflows/release.yml` kører på tags der matcher `v*`.
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+Efter workflowet er færdigt, ligger der assets i din GitHub Release:
+- `indkob-release-linux-x64.tar.gz`
+
+### 2) Installér i en Debian/Ubuntu LXC
+Krav: systemd i containeren.
+Krav: x86_64 (64-bit).
+
+Fra en checkout i containeren:
+```bash
+sudo bash deploy/lxc-bootstrap.sh <owner>/<repo>
+```
+
+Det installerer nginx + en systemd service (`indkob-api`) og kører første deploy.
+
+### 3) Opdatér senere
+```bash
+sudo /usr/local/bin/indkob-update <owner>/<repo>
+```
+
+### Data og ports
+- SQLite DB: `/var/lib/indkob/grocery.db` (bevares ved opdatering)
+- Web: nginx på port 80
+- API: lytter på `127.0.0.1:5046` og proxys via nginx `/api`

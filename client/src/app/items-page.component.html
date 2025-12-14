@@ -1,0 +1,113 @@
+<div class="page">
+  <div class="grid form-grid">
+    <div class="col-12">
+      <p-card header="Vare-katalog" subheader="Genbrug varer og områder på tværs af ture">
+        <form class="p-fluid" [formGroup]="itemForm" (ngSubmit)="saveItem()">
+          <div class="field inline">
+            <div>
+              <label for="name">Navn</label>
+              <input pInputText id="name" formControlName="name" placeholder="fx Mælk, Gulerødder" />
+              <small *ngIf="itemForm.controls.name.invalid && itemForm.controls.name.touched" class="error">
+                Navn er påkrævet
+              </small>
+            </div>
+            <div>
+              <label for="area">Område i butikken</label>
+              <p-autoComplete
+                id="area"
+                formControlName="area"
+                [suggestions]="filteredAreas"
+                [dropdown]="true"
+                [forceSelection]="false"
+                (completeMethod)="filterAreas($event)"
+                placeholder="fx Mejeri, Frugt & grønt"
+                inputId="area"
+              ></p-autoComplete>
+              <small *ngIf="itemForm.controls.area.invalid && itemForm.controls.area.touched" class="error">
+                Område er påkrævet
+              </small>
+            </div>
+          </div>
+          <div class="flex gap-2 mt-3 button-row">
+            <button pButton type="submit" label="Tilføj vare" [loading]="savingItem"></button>
+          </div>
+        </form>
+
+        <p-divider></p-divider>
+
+        <div class="table-head">
+          <div>
+            <p class="eyebrow">Katalog</p>
+            <p class="lead">Søg og rediger direkte i tabellen.</p>
+          </div>
+          <p-tag severity="info" [value]="items.length + ' linjer'"></p-tag>
+        </div>
+
+        <p-table [value]="items" [loading]="loadingItems" responsiveLayout="scroll" size="small" styleClass="items-table">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Navn</th>
+              <th>Område</th>
+              <th style="width: 120px"></th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-item>
+            <tr [class.editing]="rowEditingId === item.id">
+              <td>
+                <ng-container *ngIf="rowEditingId === item.id; else nameView">
+                  <input pInputText [(ngModel)]="editDraft.name" class="inline-input" placeholder="Navn" />
+                </ng-container>
+                <ng-template #nameView>
+                  <div class="name">{{ item.name }}</div>
+                </ng-template>
+              </td>
+              <td>
+                <ng-container *ngIf="rowEditingId === item.id; else areaView">
+                  <p-autoComplete
+                    [suggestions]="filteredAreas"
+                    [dropdown]="true"
+                    [forceSelection]="false"
+                    (completeMethod)="filterAreas($event)"
+                    [(ngModel)]="editDraft.area"
+                    [inputId]="'inline-area-' + item.id"
+                    class="inline-auto"
+                    placeholder="Område"
+                  ></p-autoComplete>
+                </ng-container>
+                <ng-template #areaView>
+                  <button type="button" class="area-chip" (click)="beginInlineEdit(item, true)">
+                    <i class="pi pi-map-marker"></i>
+                    {{ item.area }}
+                  </button>
+                </ng-template>
+              </td>
+              <td class="actions">
+                <ng-container *ngIf="rowEditingId === item.id; else viewActions">
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-check"
+                    rounded
+                    text
+                    [loading]="savingItem && rowEditingId === item.id"
+                    (click)="saveInlineEdit(item); $event.stopPropagation()"
+                  ></button>
+                  <button pButton type="button" icon="pi pi-times" rounded text severity="secondary" (click)="cancelInlineEdit(); $event.stopPropagation()"></button>
+                </ng-container>
+                <ng-template #viewActions>
+                  <button pButton type="button" icon="pi pi-pencil" rounded text (click)="beginInlineEdit(item)"></button>
+                  <button pButton type="button" icon="pi pi-trash" rounded text severity="danger" (click)="deleteItem(item)"></button>
+                </ng-template>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="3" class="text-center">Tilføj dine første varer for at komme i gang.</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </p-card>
+    </div>
+  </div>
+</div>

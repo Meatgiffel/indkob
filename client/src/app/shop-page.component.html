@@ -1,0 +1,64 @@
+<div class="page shop-page">
+  <p-card styleClass="shop-card">
+    <div class="shop-tools">
+      <p-dropdown
+        [options]="doneFilterOptions"
+        [(ngModel)]="doneFilter"
+        [ngModelOptions]="{ standalone: true }"
+        [appendTo]="'body'"
+        styleClass="filter"
+        placeholder="Filter"
+      ></p-dropdown>
+
+      <div class="counts">
+        <span class="count">{{ openCount }} tilbage</span>
+        <span class="count muted" *ngIf="doneCount">{{ doneCount }} i kurv</span>
+      </div>
+
+      <button
+        pButton
+        type="button"
+        icon="pi pi-refresh"
+        rounded
+        text
+        [loading]="loadingEntries"
+        (click)="loadEntries()"
+        aria-label="Opdater"
+      ></button>
+    </div>
+
+    <div class="groups" *ngIf="groupedEntries.length; else empty">
+      <div class="group" *ngFor="let group of groupedEntries">
+        <div class="group-head">{{ group.area }}</div>
+
+        <div class="rows">
+          <div
+            class="row"
+            *ngFor="let entry of group.entries"
+            [class.done]="entry.isDone"
+            [class.updating]="isUpdating(entry)"
+            (click)="toggleDone(entry)"
+            tabindex="0"
+            role="button"
+          >
+            <div class="check" [class.done]="entry.isDone"><i class="pi" [ngClass]="entry.isDone ? 'pi-check' : 'pi-circle'"></i></div>
+            <div class="main">
+              <div class="name">{{ entry.itemName }}</div>
+              <div class="meta" *ngIf="entry.amount || entry.note">
+                <span *ngIf="entry.amount">{{ entry.amount }}</span>
+                <span *ngIf="entry.note">{{ entry.note }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <ng-template #empty>
+      <div class="empty">
+        <i class="pi pi-inbox"></i>
+        <p>Ingen varer på listen endnu.</p>
+      </div>
+    </ng-template>
+  </p-card>
+</div>

@@ -1,0 +1,167 @@
+<div class="page">
+  <div class="grid form-grid">
+    <div class="col-12 lg:col-4">
+      <p-card header="Tilføj til indkøbsseddel" subheader="Vælg fra kataloget, og læg noter eller mængder på">
+        <form class="p-fluid" [formGroup]="entryForm" (ngSubmit)="saveEntry()">
+          <div class="field search-field">
+            <label for="itemId">Søg i varer</label>
+            <p-autoComplete
+              inputId="itemId"
+              [suggestions]="filteredItems"
+              [dropdown]="true"
+              [forceSelection]="false"
+              [showClear]="true"
+              [field]="'name'"
+              [autoHighlight]="true"
+              [delay]="60"
+              [minLength]="0"
+              styleClass="big-search"
+              [ngModel]="searchTerm"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="onSearchChange($event)"
+              (completeMethod)="filterItems($event)"
+              (onSelect)="selectItem($event)"
+              (onClear)="onSearchChange('')"
+              (keydown.enter)="maybeCreateFromEnter($event)"
+              placeholder="Søg efter navn eller område"
+            >
+              <ng-template let-item pTemplate="item">
+                <div class="dropdown-option" [class.create]="item._create">
+                  <span class="name">
+                    <i *ngIf="item._create" class="pi pi-plus"></i>
+                    {{ item.name }}
+                  </span>
+                  <small class="muted" *ngIf="!item._create">{{ item.area }}</small>
+                  <small class="muted" *ngIf="item._create">Opret ny</small>
+                </div>
+              </ng-template>
+              <ng-template pTemplate="selectedItem">
+                <div class="selected-pill" *ngIf="searchTerm; else placeholder">
+                  <span class="name">{{ searchTerm }}</span>
+                </div>
+                <ng-template #placeholder>Vælg vare</ng-template>
+              </ng-template>
+            </p-autoComplete>
+            <small *ngIf="entryForm.controls.itemId.invalid && entryForm.controls.itemId.touched" class="error">
+              Vælg en vare
+            </small>
+            <p class="hint">Tip: skriv område eller varetype, fx “mejeri” eller “brød”.</p>
+            <div class="create-inline" *ngIf="searchTerm && searchTerm !== lastSelectedTerm">
+              <div class="create-text">
+                <p class="muted">Ingen match? Opret “{{ searchTerm }}” som ny vare.</p>
+              </div>
+              <div class="create-fields">
+                <p-autoComplete
+                  [suggestions]="filteredAreas"
+                  [dropdown]="true"
+                  [forceSelection]="false"
+                  (completeMethod)="filterAreas($event)"
+                  [(ngModel)]="newItemArea"
+                  [ngModelOptions]="{ standalone: true }"
+                  placeholder="Område"
+                  inputId="quick-area"
+                ></p-autoComplete>
+                <button
+                  pButton
+                  type="button"
+                  label="Opret vare"
+                  icon="pi pi-plus"
+                  [loading]="creatingItem"
+                  (click)="createItemFromSearch()"
+                ></button>
+              </div>
+            </div>
+          </div>
+          <div class="field inline">
+            <div>
+              <label for="amount">Mængde</label>
+              <input pInputText id="amount" formControlName="amount" placeholder="fx 2 stk" />
+            </div>
+            <div>
+              <label for="note">Note</label>
+              <input pInputText id="note" formControlName="note" placeholder="fx Øko, mærke" />
+            </div>
+          </div>
+          <div class="field checkbox" *ngIf="editingEntryId">
+            <label for="isDone">Klar</label>
+            <p-checkbox inputId="isDone" formControlName="isDone" [binary]="true"></p-checkbox>
+          </div>
+          <div class="flex gap-2 mt-3 button-row">
+            <button pButton type="submit" [label]="editingEntryId ? 'Opdater linje' : 'Tilføj til listen'" [loading]="savingEntry"></button>
+            <button *ngIf="editingEntryId" pButton type="button" label="Annuller" severity="secondary" (click)="cancelEntryEdit()"></button>
+          </div>
+        </form>
+      </p-card>
+    </div>
+
+    <div class="col-12 lg:col-8">
+      <p-card header="Indkøbsseddel" subheader="Kryds af i butikken og brug noter direkte fra telefonen" styleClass="entries-card">
+        <div class="entries-tools">
+          <p-dropdown
+            [options]="doneFilterOptions"
+            [(ngModel)]="doneFilter"
+            [ngModelOptions]="{ standalone: true }"
+            [appendTo]="'body'"
+            styleClass="filter"
+            placeholder="Filter"
+          ></p-dropdown>
+          <div class="counts">
+            <span class="count">{{ openCount }} tilbage</span>
+            <span class="count muted" *ngIf="doneCount">{{ doneCount }} i kurv</span>
+          </div>
+        </div>
+        <div class="entries-list" *ngIf="groupedEntries.length; else emptyList">
+          <div class="area-group" *ngFor="let group of groupedEntries">
+            <div class="area-head">
+              <h3>{{ group.area }}</h3>
+              <div class="area-counts">
+                <span class="count open" *ngIf="group.openCount">{{ group.openCount }} åbne</span>
+                <span class="count done">{{ group.doneCount }} klar</span>
+              </div>
+            </div>
+
+            <div class="area-entries">
+              <div
+                class="entry-row"
+                *ngFor="let entry of group.entries"
+                [class.done]="entry.isDone"
+                (click)="toggleDone(entry)"
+                tabindex="0"
+                role="button"
+              >
+                <div class="check-badge" [class.done]="entry.isDone"><i class="pi" [ngClass]="entry.isDone ? 'pi-check' : 'pi-circle'"></i></div>
+                <div class="row-main">
+                  <div class="row-top">
+                    <div class="entry-name">{{ entry.itemName }}</div>
+                    <div class="inline-meta">
+                      <span *ngIf="entry.amount" class="tiny-chip">{{ entry.amount }}</span>
+                      <span *ngIf="entry.note" class="tiny-chip">{{ entry.note }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="entry-actions">
+                  <button pButton type="button" icon="pi pi-pencil" rounded text (click)="startEditEntry(entry); $event.stopPropagation()"></button>
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-trash"
+                    rounded
+                    text
+                    severity="danger"
+                    (click)="deleteEntry(entry); $event.stopPropagation()"
+                  ></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <ng-template #emptyList>
+          <div class="empty">
+            <i class="pi pi-inbox"></i>
+            <p>Ingen varer på listen endnu. Tilføj dine første varer for at se dem her.</p>
+          </div>
+        </ng-template>
+      </p-card>
+    </div>
+  </div>
+</div>

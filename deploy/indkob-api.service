@@ -1,0 +1,23 @@
+[Unit]
+Description=Indkøb API
+After=network.target
+
+[Service]
+Type=simple
+User=indkob
+Group=indkob
+WorkingDirectory=/opt/indkob/api
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://127.0.0.1:5046
+Environment=ConnectionStrings__DefaultConnection=Data Source=/var/lib/indkob/grocery.db
+ExecStart=/opt/indkob/api/Api
+Restart=always
+RestartSec=2
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/indkob
+
+[Install]
+WantedBy=multi-user.target

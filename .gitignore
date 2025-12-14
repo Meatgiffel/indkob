@@ -1,0 +1,21 @@
+# Root ignores to keep the repo lean
+
+# Client
+client/node_modules
+client/dist
+client/.angular
+client/tmp
+
+# API
+Api/bin
+Api/obj
+Api/*.db
+Api/*.db-*
+
+# OS/IDE
+.DS_Store
+Thumbs.db
+/.vscode
+
+# Release artifacts
+/release

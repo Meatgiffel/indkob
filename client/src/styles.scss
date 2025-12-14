@@ -1,0 +1,111 @@
+@import "primeicons/primeicons.css";
+@import "primeng/resources/themes/lara-light-blue/theme.css";
+@import "primeng/resources/primeng.css";
+@import "primeflex/primeflex.css";
+
+:root {
+  --bg-gradient: radial-gradient(circle at 10% 20%, #cfe3f1 0, #ddeaf4 28%, #eef2f7 55%, #f1e8df 75%, #d2e4f3 100%);
+  --radius-lg: 18px;
+  --radius-md: 14px;
+  --radius-sm: 12px;
+  --ink: #0f172a;
+  --muted: #5b6476;
+  --primary: #0fa9a7;
+  --primary-strong: #0c8c8a;
+  --accent: #f59e0b;
+  --surface: #ffffff;
+  --surface-muted: #f6f8fc;
+  --border-soft: rgba(12, 29, 60, 0.14);
+  --border-strong: rgba(12, 29, 60, 0.22);
+  --shadow: 0 22px 55px rgba(15, 23, 42, 0.14);
+
+  /* PrimeNG/PrimeFlex surface tokens (keep boxes consistent) */
+  --border-radius: var(--radius-sm);
+  --content-padding: 1rem;
+  --inline-spacing: 0.4rem;
+  --surface-ground: #eef2f7;
+  --surface-section: var(--surface);
+  --surface-card: var(--surface);
+  --surface-overlay: var(--surface);
+  --surface-border: rgba(12, 29, 60, 0.18);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  background: var(--bg-gradient);
+  color: var(--ink);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.grid.form-grid {
+  margin-right: -0.4rem;
+  margin-left: -0.4rem;
+  margin-top: 0;
+  column-gap: 0;
+  row-gap: 0.8rem;
+}
+
+.grid.form-grid > [class*='col'] {
+  padding: 0 0.4rem;
+}
+
+.p-card {
+  border: 1px solid var(--border-soft);
+  box-shadow: var(--shadow);
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.p-card .p-card-body {
+  padding: var(--content-padding);
+}
+
+.p-card .p-card-title {
+  margin-bottom: 0.35rem;
+}
+
+.p-card .p-card-subtitle {
+  margin-bottom: 0.65rem;
+}
+
+.p-card .p-card-content,
+.p-card .p-card-footer {
+  padding: 0;
+}
+
+.p-card .p-card-body,
+.p-card .p-card-content,
+.p-card .p-card-footer,
+.p-card .p-card-header {
+  background: var(--surface);
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+p {
+  color: var(--muted);
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::selection {
+  background: rgba(15, 169, 167, 0.18);
+  color: var(--ink);
+}

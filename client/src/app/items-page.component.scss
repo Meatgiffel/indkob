@@ -1,0 +1,181 @@
+.page {
+  max-width: 1160px;
+  margin: 0 auto;
+}
+
+.page-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  background: linear-gradient(120deg, var(--surface-muted), var(--surface));
+  border: 1px solid var(--border-strong);
+  padding: 0.55rem 0.7rem;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
+  margin-bottom: 0.75rem;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-bottom: 0.1rem;
+}
+
+.lead {
+  margin-top: 0.2rem;
+  max-width: 540px;
+  font-size: 0.95rem;
+}
+
+.stat-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  border: 1px solid var(--border-strong);
+  color: var(--muted);
+}
+
+.pill.success {
+  background: rgba(15, 169, 167, 0.12);
+  color: var(--primary-strong);
+  border-color: rgba(15, 169, 167, 0.18);
+}
+
+.pill.soft {
+  background: rgba(15, 23, 42, 0.03);
+}
+
+.helper-card {
+  min-width: 240px;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.07);
+}
+
+.helper-foot {
+  font-size: 0.92rem;
+  margin-top: 0.4rem;
+}
+
+.form-grid {
+  margin-top: 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.field.inline {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.field label {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.error {
+  color: #b91c1c;
+}
+
+.button-row {
+  justify-content: flex-start;
+}
+
+.inline-input {
+  width: 100%;
+}
+
+.inline-auto ::ng-deep .p-autocomplete-input {
+  padding: 0.4rem 0.5rem;
+}
+
+.table-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.45rem;
+}
+
+::ng-deep .items-table .p-datatable-thead > tr > th {
+  background: rgba(15, 23, 42, 0.02);
+  color: var(--muted);
+  font-weight: 700;
+  border: none;
+}
+
+::ng-deep .items-table .p-datatable-tbody > tr > td {
+  border: none;
+  padding: 0.65rem 0.6rem;
+}
+
+::ng-deep .items-table .p-datatable-tbody > tr:nth-child(even) > td {
+  background: rgba(15, 23, 42, 0.02);
+}
+
+::ng-deep .items-table .p-datatable-tbody > tr:hover > td {
+  background: rgba(15, 169, 167, 0.08);
+}
+
+.actions {
+  display: flex;
+  gap: 0.35rem;
+  justify-content: flex-end;
+}
+
+tr.editing .area-chip {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.area-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(15, 169, 167, 0.12);
+  color: var(--primary-strong);
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.area-chip:hover {
+  box-shadow: 0 6px 16px rgba(15, 169, 167, 0.2);
+  transform: translateY(-1px);
+}
+
+.area-chip i {
+  font-size: 0.85rem;
+}
+
+@media (max-width: 820px) {
+  .page-head {
+    flex-direction: column;
+  }
+
+  .helper-card {
+    width: 100%;
+  }
+}
