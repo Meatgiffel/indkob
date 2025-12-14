@@ -95,6 +95,7 @@ install -d -m 0755 /etc/systemd/system/indkob-api.service.d
 cat >/etc/systemd/system/indkob-api.service.d/override.conf <<'EOF'
 [Service]
 Environment=DOTNET_BUNDLE_EXTRACT_BASE_DIR=/var/lib/indkob/bundle-extract
+Environment="ConnectionStrings__DefaultConnection=Data Source=/var/lib/indkob/grocery.db"
 EOF
 
 systemctl daemon-reload || true

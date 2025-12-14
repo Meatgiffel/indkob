@@ -9,7 +9,7 @@ Group=indkob
 WorkingDirectory=/opt/indkob/api
 Environment=ASPNETCORE_ENVIRONMENT=Production
 Environment=ASPNETCORE_URLS=http://127.0.0.1:5046
-Environment=ConnectionStrings__DefaultConnection=Data Source=/var/lib/indkob/grocery.db
+Environment="ConnectionStrings__DefaultConnection=Data Source=/var/lib/indkob/grocery.db"
 Environment=DOTNET_BUNDLE_EXTRACT_BASE_DIR=/var/lib/indkob/bundle-extract
 ExecStart=/opt/indkob/api/Api
 Restart=always
