@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 REPO="${1:-}"
 SUDO="sudo"
 
@@ -10,7 +12,7 @@ detect_repo_from_git_remote() {
   fi
 
   local remote
-  remote="$(git config --get remote.origin.url 2>/dev/null || true)"
+  remote="$(git -C "${SCRIPT_DIR}" config --get remote.origin.url 2>/dev/null || true)"
   if [[ -z "${remote}" ]]; then
     return 1
   fi
@@ -54,13 +56,13 @@ else
   SUDO=""
 fi
 
-if [[ -f "deploy/lxc-update.sh" ]]; then
-  ${SUDO} install -m 0755 deploy/lxc-update.sh /usr/local/bin/indkob-update
+if [[ -f "${SCRIPT_DIR}/deploy/lxc-update.sh" ]]; then
+  ${SUDO} install -m 0755 "${SCRIPT_DIR}/deploy/lxc-update.sh" /usr/local/bin/indkob-update
 fi
 
 if [[ ! -x "/usr/local/bin/indkob-update" ]]; then
   echo "Missing: /usr/local/bin/indkob-update"
-  echo "Run first-time install: sudo bash deploy/lxc-bootstrap.sh ${REPO}"
+  echo "Run first-time install: ${SCRIPT_DIR}/bootstrap.sh ${REPO}"
   exit 1
 fi
 

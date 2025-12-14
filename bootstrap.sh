@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 REPO="${1:-}"
 SUDO="sudo"
 
 if [[ -z "${REPO}" ]]; then
   if command -v git >/dev/null 2>&1; then
-    REPO="$(git config --get remote.origin.url 2>/dev/null || true)"
+    REPO="$(git -C "${SCRIPT_DIR}" config --get remote.origin.url 2>/dev/null || true)"
   fi
 
   if [[ "${REPO}" =~ ^git@github\.com:([^/]+/[^/]+)(\.git)?$ ]]; then
@@ -26,8 +28,8 @@ if [[ -z "${REPO}" ]]; then
   exit 1
 fi
 
-if [[ ! -f "deploy/lxc-bootstrap.sh" ]]; then
-  echo "Missing: deploy/lxc-bootstrap.sh"
+if [[ ! -f "${SCRIPT_DIR}/deploy/lxc-bootstrap.sh" ]]; then
+  echo "Missing: ${SCRIPT_DIR}/deploy/lxc-bootstrap.sh"
   echo "Run this from the repo root."
   exit 1
 fi
@@ -41,4 +43,4 @@ else
   SUDO=""
 fi
 
-${SUDO} bash deploy/lxc-bootstrap.sh "${REPO}"
+${SUDO} bash "${SCRIPT_DIR}/deploy/lxc-bootstrap.sh" "${REPO}"
