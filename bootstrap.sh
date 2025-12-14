@@ -2,6 +2,7 @@
 set -euo pipefail
 
 REPO="${1:-}"
+SUDO="sudo"
 
 if [[ -z "${REPO}" ]]; then
   if command -v git >/dev/null 2>&1; then
@@ -36,7 +37,8 @@ if [[ "$(id -u)" -ne 0 ]]; then
     echo "This command needs root privileges (sudo not found)."
     exit 1
   fi
+else
+  SUDO=""
 fi
 
-sudo bash deploy/lxc-bootstrap.sh "${REPO}"
-
+${SUDO} bash deploy/lxc-bootstrap.sh "${REPO}"

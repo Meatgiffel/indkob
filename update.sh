@@ -2,6 +2,7 @@
 set -euo pipefail
 
 REPO="${1:-}"
+SUDO="sudo"
 
 detect_repo_from_git_remote() {
   if ! command -v git >/dev/null 2>&1; then
@@ -49,10 +50,12 @@ if [[ "$(id -u)" -ne 0 ]]; then
     echo "This command needs root privileges (sudo not found)."
     exit 1
   fi
+else
+  SUDO=""
 fi
 
 if [[ -f "deploy/lxc-update.sh" ]]; then
-  sudo install -m 0755 deploy/lxc-update.sh /usr/local/bin/indkob-update
+  ${SUDO} install -m 0755 deploy/lxc-update.sh /usr/local/bin/indkob-update
 fi
 
 if [[ ! -x "/usr/local/bin/indkob-update" ]]; then
@@ -61,5 +64,4 @@ if [[ ! -x "/usr/local/bin/indkob-update" ]]; then
   exit 1
 fi
 
-sudo /usr/local/bin/indkob-update "${REPO}"
-
+${SUDO} /usr/local/bin/indkob-update "${REPO}"
