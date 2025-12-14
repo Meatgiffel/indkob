@@ -28,6 +28,8 @@ if [[ -z "${REPO}" ]]; then
   exit 1
 fi
 
+REPO="${REPO%.git}"
+
 if [[ ! -f "${SCRIPT_DIR}/deploy/lxc-bootstrap.sh" ]]; then
   echo "Missing: ${SCRIPT_DIR}/deploy/lxc-bootstrap.sh"
   echo "Run this from the repo root."

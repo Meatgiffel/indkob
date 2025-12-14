@@ -41,6 +41,8 @@ if [[ -z "${REPO}" ]]; then
   REPO="$(detect_repo_from_git_remote || true)"
 fi
 
+REPO="${REPO%.git}"
+
 if [[ -z "${REPO}" ]]; then
   echo "Usage: $0 <owner/repo>"
   echo "Tip: run this inside a git checkout with origin set to GitHub."
