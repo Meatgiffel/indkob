@@ -22,13 +22,14 @@ CURRENT_DIR="/opt/indkob/current"
 API_LINK="/opt/indkob/api"
 WWW_LINK="/var/www/indkob"
 DATA_DIR="/var/lib/indkob"
+BUNDLE_DIR="/var/lib/indkob/bundle-extract"
 
 if [[ "$(id -u)" -ne 0 ]]; then
   echo "Run as root (sudo)."
   exit 1
 fi
 
-install -d -m 0755 "${RELEASES_DIR}" "${DATA_DIR}"
+install -d -m 0755 "${RELEASES_DIR}" "${DATA_DIR}" "${BUNDLE_DIR}"
 install -d -m 0755 /var/www
 
 TMP_DIR="$(mktemp -d)"
@@ -55,6 +56,7 @@ if id indkob >/dev/null 2>&1; then
   chown -R indkob:indkob "${CURRENT_DIR}/api" || true
   chown -R www-data:www-data "${CURRENT_DIR}/www" || true
   chown -R indkob:indkob "${DATA_DIR}" || true
+  chown -R indkob:indkob "${BUNDLE_DIR}" || true
 fi
 
 systemctl daemon-reload || true

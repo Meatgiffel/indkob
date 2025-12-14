@@ -66,3 +66,11 @@ sudo /usr/local/bin/indkob-update <owner>/<repo>
 - SQLite DB: `/var/lib/indkob/grocery.db` (bevares ved opdatering)
 - Web: nginx på port 80
 - API: lytter på `127.0.0.1:5046` og proxys via nginx `/api`
+
+## Fejlsøgning
+Hvis frontend virker men API-kald fejler (fx `502 Bad Gateway`), så er det typisk fordi API-servicen ikke kører:
+
+```bash
+sudo systemctl status indkob-api --no-pager
+sudo journalctl -u indkob-api -n 200 --no-pager
+```
