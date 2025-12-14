@@ -10,6 +10,14 @@ export class ApiService {
 
   constructor(private http: HttpClient) {}
 
+  getMealPlanWeek(weekStart: string): Observable<{ date: string; dinner: string | null }[]> {
+    return this.http.get<{ date: string; dinner: string | null }[]>(`${this.baseUrl}/mealplan`, { params: { weekStart } });
+  }
+
+  upsertMealPlanDay(date: string, dinner: string | null): Observable<{ date: string; dinner: string | null }> {
+    return this.http.put<{ date: string; dinner: string | null }>(`${this.baseUrl}/mealplan/${date}`, { dinner });
+  }
+
   me(): Observable<AuthUser> {
     return this.http.get<AuthUser>(`${this.baseUrl}/auth/me`);
   }

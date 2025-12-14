@@ -8,6 +8,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<User> Users => Set<User>();
     public DbSet<Item> Items => Set<Item>();
     public DbSet<GroceryEntry> GroceryEntries => Set<GroceryEntry>();
+    public DbSet<MealPlanDay> MealPlanDays => Set<MealPlanDay>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -41,6 +42,19 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .HasForeignKey(e => e.ItemId)
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<MealPlanDay>(entity =>
+        {
+            entity.Property(e => e.Date).IsRequired();
+            entity.Property(e => e.Dinner).HasMaxLength(256);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .ValueGeneratedOnAdd();
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .ValueGeneratedOnAddOrUpdate();
+            entity.HasIndex(e => e.Date).IsUnique();
         });
     }
 }

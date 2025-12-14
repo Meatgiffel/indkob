@@ -1,0 +1,58 @@
+<div class="page meal-plan-page">
+  <p-card styleClass="meal-plan-card">
+    <div class="header">
+      <div class="title">
+        <div class="label">Madplan (aftensmad)</div>
+        <div class="sub muted">{{ weekLabel }}</div>
+      </div>
+
+      <div class="nav">
+        <button pButton type="button" icon="pi pi-angle-left" label="Forrige" class="p-button-text" (click)="previousWeek()"></button>
+        <button pButton type="button" icon="pi pi-calendar" label="Denne uge" class="p-button-text" (click)="goToCurrentWeek()"></button>
+        <button pButton type="button" icon="pi pi-angle-right" label="Næste" class="p-button-text" (click)="nextWeek()"></button>
+      </div>
+    </div>
+
+    <div class="days" *ngIf="days.length; else loadingState">
+      <div class="day" *ngFor="let day of days">
+        <div class="day-head">
+          <div class="day-name">{{ dayLabel(day.date) }}</div>
+          <div class="day-actions">
+            <button
+              pButton
+              type="button"
+              icon="pi pi-trash"
+              class="p-button-text p-button-danger"
+              [disabled]="isSaving(day.date) || !day.dinner"
+              (click)="clearDay(day)"
+              aria-label="Ryd"
+            ></button>
+            <button
+              pButton
+              type="button"
+              icon="pi pi-save"
+              class="p-button-text"
+              [loading]="isSaving(day.date)"
+              (click)="saveDay(day)"
+              aria-label="Gem"
+            ></button>
+          </div>
+        </div>
+
+        <input
+          pInputText
+          class="dinner-input"
+          [(ngModel)]="day.dinner"
+          [ngModelOptions]="{ standalone: true }"
+          placeholder="Skriv aftensmad…"
+          (blur)="saveDay(day)"
+        />
+      </div>
+    </div>
+
+    <ng-template #loadingState>
+      <div class="empty muted">{{ loading ? 'Henter…' : 'Ingen data' }}</div>
+    </ng-template>
+  </p-card>
+</div>
+
