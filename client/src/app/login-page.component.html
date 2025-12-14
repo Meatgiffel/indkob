@@ -18,6 +18,10 @@
       </div>
 
       <button pButton type="submit" class="login-button" label="Log ind" icon="pi pi-sign-in" [loading]="loading"></button>
+
+      <div class="build-info" *ngIf="buildInfo.buildInfo$ | async as info">
+        Version: {{ info.version }}
+      </div>
     </form>
   </p-card>
 </div>

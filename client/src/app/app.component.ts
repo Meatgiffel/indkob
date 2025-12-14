@@ -8,6 +8,7 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService, PrimeNGConfig } from 'primeng/api';
 import { AuthService } from './services/auth.service';
 import { filter } from 'rxjs';
+import { BuildInfoService } from './services/build-info.service';
 
 @Component({
   selector: 'app-root',
@@ -23,12 +24,14 @@ export class AppComponent implements OnInit {
   constructor(
     private primengConfig: PrimeNGConfig,
     public auth: AuthService,
+    public buildInfo: BuildInfoService,
     private router: Router
   ) {}
 
   async ngOnInit(): Promise<void> {
     this.primengConfig.ripple = true;
     await this.auth.ensureLoaded();
+    await this.buildInfo.ensureLoaded();
 
     this.updateChromeVisibility(this.router.url);
     this.router.events.pipe(filter(event => event instanceof NavigationEnd)).subscribe(event => {

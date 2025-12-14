@@ -11,7 +11,10 @@
         </div>
         <div class="brand-block">
           <span class="brand">Indkøb</span>
-          <span class="muted">Delt indkøbsseddel • Offline-klar</span>
+          <span class="muted">
+            Delt indkøbsseddel • Offline-klar
+            <ng-container *ngIf="buildInfo.buildInfo$ | async as info"> • {{ info.version }}</ng-container>
+          </span>
         </div>
       </div>
       <div class="toolbar-right" *ngIf="auth.user$ | async as user; else loggedOutToolbar">

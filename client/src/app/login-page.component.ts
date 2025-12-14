@@ -9,6 +9,7 @@ import { ButtonModule } from 'primeng/button';
 import { MessageService } from 'primeng/api';
 import { AuthService } from './services/auth.service';
 import { parseHttpError } from './services/http-error';
+import { BuildInfoService } from './services/build-info.service';
 
 @Component({
   selector: 'app-login-page',
@@ -29,11 +30,13 @@ export class LoginPageComponent implements OnInit {
     private fb: FormBuilder,
     private auth: AuthService,
     private router: Router,
-    private toast: MessageService
+    private toast: MessageService,
+    public buildInfo: BuildInfoService
   ) {}
 
   async ngOnInit(): Promise<void> {
     await this.auth.ensureLoaded();
+    await this.buildInfo.ensureLoaded();
     if (this.auth.isAuthenticated) {
       this.router.navigateByUrl('/list');
     }
@@ -59,4 +62,3 @@ export class LoginPageComponent implements OnInit {
     }
   }
 }
-
