@@ -19,7 +19,7 @@ import { BuildInfoService } from './services/build-info.service';
   styleUrl: './app.component.scss'
 })
 export class AppComponent implements OnInit {
-  showChrome = true;
+  showChrome = !isLoginUrl(window.location.pathname);
 
   constructor(
     private primengConfig: PrimeNGConfig,
@@ -45,6 +45,10 @@ export class AppComponent implements OnInit {
   }
 
   private updateChromeVisibility(url: string): void {
-    this.showChrome = !url.startsWith('/login');
+    this.showChrome = !isLoginUrl(url);
   }
+}
+
+function isLoginUrl(url: string): boolean {
+  return url.startsWith('/login');
 }
