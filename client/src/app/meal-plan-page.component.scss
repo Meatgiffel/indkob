@@ -30,10 +30,16 @@
   justify-content: flex-end;
 }
 
+.days-scroll {
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
 .days {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(7, minmax(180px, 1fr));
   gap: 10px;
+  min-width: 1260px;
 }
 
 .day {
@@ -78,5 +84,9 @@
   .nav {
     justify-content: flex-start;
   }
-}
 
+  .days {
+    grid-template-columns: repeat(7, minmax(240px, 1fr));
+    min-width: 1680px;
+  }
+}

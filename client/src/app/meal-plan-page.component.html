@@ -13,40 +13,42 @@
       </div>
     </div>
 
-    <div class="days" *ngIf="days.length; else loadingState">
-      <div class="day" *ngFor="let day of days">
-        <div class="day-head">
-          <div class="day-name">{{ dayLabel(day.date) }}</div>
-          <div class="day-actions">
-            <button
-              pButton
-              type="button"
-              icon="pi pi-trash"
-              class="p-button-text p-button-danger"
-              [disabled]="isSaving(day.date) || !day.dinner"
-              (click)="clearDay(day)"
-              aria-label="Ryd"
-            ></button>
-            <button
-              pButton
-              type="button"
-              icon="pi pi-save"
-              class="p-button-text"
-              [loading]="isSaving(day.date)"
-              (click)="saveDay(day)"
-              aria-label="Gem"
-            ></button>
+    <div class="days-scroll" *ngIf="days.length; else loadingState">
+      <div class="days">
+        <div class="day" *ngFor="let day of days">
+          <div class="day-head">
+            <div class="day-name">{{ dayLabel(day.date) }}</div>
+            <div class="day-actions">
+              <button
+                pButton
+                type="button"
+                icon="pi pi-trash"
+                class="p-button-text p-button-danger"
+                [disabled]="isSaving(day.date) || !day.dinner"
+                (click)="clearDay(day)"
+                aria-label="Ryd"
+              ></button>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-save"
+                class="p-button-text"
+                [loading]="isSaving(day.date)"
+                (click)="saveDay(day)"
+                aria-label="Gem"
+              ></button>
+            </div>
           </div>
-        </div>
 
-        <input
-          pInputText
-          class="dinner-input"
-          [(ngModel)]="day.dinner"
-          [ngModelOptions]="{ standalone: true }"
-          placeholder="Skriv aftensmad…"
-          (blur)="saveDay(day)"
-        />
+          <input
+            pInputText
+            class="dinner-input"
+            [(ngModel)]="day.dinner"
+            [ngModelOptions]="{ standalone: true }"
+            placeholder="Aftensmad…"
+            (blur)="saveDay(day)"
+          />
+        </div>
       </div>
     </div>
 
@@ -55,4 +57,3 @@
     </ng-template>
   </p-card>
 </div>
-
