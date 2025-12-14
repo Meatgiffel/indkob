@@ -1,12 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { ToolbarModule } from 'primeng/toolbar';
 import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { MessageService, PrimeNGConfig } from 'primeng/api';
 import { AuthService } from './services/auth.service';
+import { filter } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -17,6 +18,8 @@ import { AuthService } from './services/auth.service';
   styleUrl: './app.component.scss'
 })
 export class AppComponent implements OnInit {
+  showChrome = true;
+
   constructor(
     private primengConfig: PrimeNGConfig,
     public auth: AuthService,
@@ -26,10 +29,19 @@ export class AppComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     this.primengConfig.ripple = true;
     await this.auth.ensureLoaded();
+
+    this.updateChromeVisibility(this.router.url);
+    this.router.events.pipe(filter(event => event instanceof NavigationEnd)).subscribe(event => {
+      this.updateChromeVisibility((event as NavigationEnd).urlAfterRedirects);
+    });
   }
 
   async logout(): Promise<void> {
     await this.auth.logout();
     await this.router.navigateByUrl('/login');
+  }
+
+  private updateChromeVisibility(url: string): void {
+    this.showChrome = !url.startsWith('/login');
   }
 }

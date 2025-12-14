@@ -1,14 +1,24 @@
 .login-page {
   display: flex;
   justify-content: center;
-  padding: 24px 12px;
+  padding: 56px 12px 24px;
+}
+
+.login-page :host ::ng-deep .p-card {
+  width: min(520px, 94vw);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow);
+}
+
+.login-page :host ::ng-deep .p-card .p-card-body {
+  padding: 1.25rem;
 }
 
 .login-form {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  min-width: min(420px, 92vw);
 }
 
 .field {
@@ -17,3 +27,18 @@
   gap: 6px;
 }
 
+.login-page :host ::ng-deep input.p-inputtext {
+  width: 100%;
+}
+
+.login-page :host ::ng-deep .p-password {
+  width: 100%;
+}
+
+.login-page :host ::ng-deep .p-password input {
+  width: 100%;
+}
+
+.login-button {
+  width: 100%;
+}
