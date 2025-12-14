@@ -43,6 +43,7 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
+    await SeedData.SeedDefaultItemsAsync(db, app.Configuration, app.Logger);
 }
 
 if (app.Environment.IsDevelopment())
