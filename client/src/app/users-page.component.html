@@ -1,0 +1,67 @@
+<p-card header="Brugere">
+  <div class="actions">
+    <button pButton type="button" label="Ny bruger" icon="pi pi-plus" (click)="openCreate()"></button>
+  </div>
+
+  <p-table [value]="users" [loading]="loading" [rowHover]="true" responsiveLayout="scroll">
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Brugernavn</th>
+        <th>Admin</th>
+        <th>Oprettet</th>
+        <th style="width: 10rem"></th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-user>
+      <tr>
+        <td>{{ user.userName }}</td>
+        <td>{{ user.isAdmin ? 'Ja' : 'Nej' }}</td>
+        <td>{{ user.createdAt | date: 'short' }}</td>
+        <td class="row-actions">
+          <button pButton type="button" icon="pi pi-pencil" class="p-button-text" (click)="openEdit(user)"></button>
+          <button
+            pButton
+            type="button"
+            icon="pi pi-trash"
+            class="p-button-text p-button-danger"
+            (click)="delete(user)"
+          ></button>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</p-card>
+
+<p-dialog
+  [header]="editing ? 'Redigér bruger' : 'Ny bruger'"
+  [(visible)]="dialogOpen"
+  [modal]="true"
+  [closable]="true"
+  [dismissableMask]="true"
+  [style]="{ width: 'min(520px, 94vw)' }"
+  (onHide)="closeDialog()"
+>
+  <form class="user-form" [formGroup]="form" (ngSubmit)="save()">
+    <div class="field">
+      <label for="userName">Brugernavn</label>
+      <input id="userName" type="text" pInputText formControlName="userName" autocomplete="username" />
+    </div>
+
+    <div class="field">
+      <label for="password">{{ editing ? 'Nyt password (valgfrit)' : 'Password' }}</label>
+      <p-password inputId="password" formControlName="password" [feedback]="false" [toggleMask]="true"></p-password>
+      <small class="muted">{{ editing ? 'Lad stå tomt for at beholde nuværende.' : 'Min. 6 tegn.' }}</small>
+    </div>
+
+    <div class="field checkbox">
+      <p-checkbox inputId="isAdmin" formControlName="isAdmin" [binary]="true"></p-checkbox>
+      <label for="isAdmin">Admin</label>
+    </div>
+
+    <div class="dialog-actions">
+      <button pButton type="button" class="p-button-text" label="Annuller" (click)="closeDialog()"></button>
+      <button pButton type="submit" label="Gem" icon="pi pi-check" [loading]="saving"></button>
+    </div>
+  </form>
+</p-dialog>
+

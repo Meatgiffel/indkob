@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
+using Microsoft.AspNetCore.Identity;
 
 namespace Api.Data;
 
@@ -314,6 +316,55 @@ public static class SeedData
         logger.LogInformation("Seeded {Count} default items.", toAdd.Count);
     }
 
-    private static string NormalizeName(string name) => name.Trim().ToLowerInvariant();
-}
+    public static async Task EnsureBootstrapAdminAsync(AppDbContext db, IConfiguration config, ILogger logger)
+    {
+        if (await db.Users.AnyAsync())
+        {
+            return;
+        }
 
+        var userName = (config.GetValue<string>("Auth:BootstrapUser") ?? "admin").Trim();
+        if (string.IsNullOrWhiteSpace(userName))
+        {
+            userName = "admin";
+        }
+
+        var password = (config.GetValue<string>("Auth:BootstrapPassword") ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            password = GenerateRandomPassword();
+            logger.LogWarning(
+                "BOOTSTRAP ADMIN CREATED. Username: {UserName} Password: {Password} (change it in the Users page).",
+                userName,
+                password
+            );
+        }
+
+        var user = new Models.User
+        {
+            UserName = userName,
+            NormalizedUserName = NormalizeUserName(userName),
+            IsAdmin = true,
+            PasswordHash = string.Empty
+        };
+
+        var hasher = new PasswordHasher<Models.User>();
+        user.PasswordHash = hasher.HashPassword(user, password);
+
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+    }
+
+    private static string NormalizeName(string name) => name.Trim().ToLowerInvariant();
+
+    private static string NormalizeUserName(string userName) => userName.Trim().ToLowerInvariant();
+
+    private static string GenerateRandomPassword()
+    {
+        var bytes = RandomNumberGenerator.GetBytes(18);
+        return Convert.ToBase64String(bytes)
+            .Replace('+', '-')
+            .Replace('/', '_')
+            .TrimEnd('=');
+    }
+}

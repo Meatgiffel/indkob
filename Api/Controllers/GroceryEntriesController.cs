@@ -1,6 +1,7 @@
 using Api.Data;
 using Api.Dtos;
 using Api.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,6 +9,7 @@ namespace Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class GroceryEntriesController(AppDbContext db) : ControllerBase
 {
     [HttpGet]

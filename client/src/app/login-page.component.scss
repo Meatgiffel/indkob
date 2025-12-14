@@ -1,0 +1,19 @@
+.login-page {
+  display: flex;
+  justify-content: center;
+  padding: 24px 12px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: min(420px, 92vw);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+

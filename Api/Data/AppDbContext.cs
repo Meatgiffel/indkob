@@ -5,11 +5,23 @@ namespace Api.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
+    public DbSet<User> Users => Set<User>();
     public DbSet<Item> Items => Set<Item>();
     public DbSet<GroceryEntry> GroceryEntries => Set<GroceryEntry>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.Property(e => e.UserName).IsRequired();
+            entity.Property(e => e.NormalizedUserName).IsRequired();
+            entity.Property(e => e.PasswordHash).IsRequired();
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .ValueGeneratedOnAdd();
+            entity.HasIndex(e => e.NormalizedUserName).IsUnique();
+        });
+
         modelBuilder.Entity<Item>(entity =>
         {
             entity.Property(e => e.Name).IsRequired();

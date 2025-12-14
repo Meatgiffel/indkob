@@ -1,4 +1,6 @@
 using Api.Data;
+using Api.Auth;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,6 +11,36 @@ const string CorsPolicyName = "Client";
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddAuthentication(AuthConstants.CookieScheme)
+    .AddCookie(AuthConstants.CookieScheme, options =>
+    {
+        options.Cookie.Name = "indkob.auth";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.SlidingExpiration = true;
+
+        options.Events = new CookieAuthenticationEvents
+        {
+            OnRedirectToLogin = context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                return Task.CompletedTask;
+            },
+            OnRedirectToAccessDenied = context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                return Task.CompletedTask;
+            }
+        };
+    });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(AuthConstants.AdminPolicy, policy =>
+        policy.RequireClaim(AuthConstants.ClaimIsAdmin, "true"));
+});
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
@@ -43,6 +75,7 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
+    await SeedData.EnsureBootstrapAdminAsync(db, app.Configuration, app.Logger);
     await SeedData.SeedDefaultItemsAsync(db, app.Configuration, app.Logger);
 }
 
@@ -60,6 +93,8 @@ if (app.Configuration.GetValue<bool>("HttpsRedirection:Enabled"))
 }
 
 app.UseCors(CorsPolicyName);
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 
 app.Run();

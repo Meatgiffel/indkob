@@ -2,13 +2,41 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { CreateEntryPayload, CreateItemPayload, GroceryEntry, Item } from '../models';
+import { AuthUser, CreateEntryPayload, CreateItemPayload, GroceryEntry, Item, User } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly baseUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
+
+  me(): Observable<AuthUser> {
+    return this.http.get<AuthUser>(`${this.baseUrl}/auth/me`);
+  }
+
+  login(userName: string, password: string): Observable<AuthUser> {
+    return this.http.post<AuthUser>(`${this.baseUrl}/auth/login`, { userName, password });
+  }
+
+  logout(): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/auth/logout`, {});
+  }
+
+  getUsers(): Observable<User[]> {
+    return this.http.get<User[]>(`${this.baseUrl}/users`);
+  }
+
+  createUser(payload: { userName: string; password: string; isAdmin: boolean }): Observable<User> {
+    return this.http.post<User>(`${this.baseUrl}/users`, payload);
+  }
+
+  updateUser(id: number, payload: { userName: string; password?: string | null; isAdmin: boolean }): Observable<User> {
+    return this.http.put<User>(`${this.baseUrl}/users/${id}`, payload);
+  }
+
+  deleteUser(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/users/${id}`);
+  }
 
   getItems(): Observable<Item[]> {
     return this.http.get<Item[]>(`${this.baseUrl}/items`);

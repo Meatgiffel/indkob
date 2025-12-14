@@ -1,0 +1,24 @@
+<div class="login-page">
+  <p-card header="Login">
+    <form class="login-form" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="field">
+        <label for="userName">Brugernavn</label>
+        <input id="userName" type="text" pInputText formControlName="userName" autocomplete="username" />
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <p-password
+          inputId="password"
+          formControlName="password"
+          [feedback]="false"
+          [toggleMask]="true"
+          autocomplete="current-password"
+        ></p-password>
+      </div>
+
+      <button pButton type="submit" label="Log ind" icon="pi pi-sign-in" [loading]="loading"></button>
+    </form>
+  </p-card>
+</div>
+

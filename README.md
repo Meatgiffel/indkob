@@ -9,6 +9,7 @@ Indkøb er en lille PWA til en delt indkøbsliste. Du vedligeholder et varekatal
 - Indkøbsseddel der grupperer efter område.
 - “Handle”-visning der prioriterer tæt liste og touch.
 - PWA (offline-klar), PrimeNG UI.
+- Simpelt login (brugernavn + password) og bruger-administration.
 
 ## Teknologi
 - Frontend: Angular (standalone) + PrimeNG/PrimeFlex (`client/`).
@@ -74,6 +75,15 @@ Alternativt (nemmere at huske):
 - SQLite DB: `/var/lib/indkob/grocery.db` (bevares ved opdatering)
 - Web: nginx på port 80
 - API: lytter på `127.0.0.1:5046` og proxys via nginx `/api`
+
+## Login
+Første gang API’et starter på en helt ny database, opretter den automatisk en admin-bruger:
+- Brugernavn: `admin` (kan ændres)
+- Password: genereres og logges i `journalctl` (medmindre du sætter det selv)
+
+Sæt selv bootstrap-login (valgfrit) ved at sætte environment variables på `indkob-api` servicen:
+- `Auth__BootstrapUser`
+- `Auth__BootstrapPassword`
 
 ## Fejlsøgning
 Hvis frontend virker men API-kald fejler (fx `502 Bad Gateway`), så er det typisk fordi API-servicen ikke kører:

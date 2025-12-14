@@ -1,0 +1,41 @@
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.row-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.user-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field.checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.muted {
+  opacity: 0.75;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+
