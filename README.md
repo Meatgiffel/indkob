@@ -56,10 +56,18 @@ sudo bash deploy/lxc-bootstrap.sh <owner>/<repo>
 ```
 
 Det installerer nginx + en systemd service (`indkob-api`) og kører første deploy.
+Alternativt (nemmere at huske):
+```bash
+./bootstrap.sh <owner>/<repo>
+```
 
 ### 3) Opdatér senere
 ```bash
 sudo /usr/local/bin/indkob-update <owner>/<repo>
+```
+Alternativt (nemmere at huske):
+```bash
+./update.sh <owner>/<repo>
 ```
 
 ### Data og ports
