@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
+import { InputTextareaModule } from 'primeng/inputtextarea';
 import { MessageService } from 'primeng/api';
 
 import { ApiService } from './services/api.service';
@@ -18,7 +18,7 @@ type MealPlanDay = {
 @Component({
   selector: 'app-meal-plan-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, CardModule, ButtonModule, InputTextModule],
+  imports: [CommonModule, FormsModule, CardModule, ButtonModule, InputTextareaModule],
   templateUrl: './meal-plan-page.component.html',
   styleUrl: './meal-plan-page.component.scss'
 })
@@ -80,11 +80,16 @@ export class MealPlanPageComponent implements OnInit {
     await this.load();
   }
 
-  dayLabel(dateIso: string): string {
+  dayShort(dateIso: string): string {
     const date = parseIsoDate(dateIso);
     const day = (date.getDay() + 6) % 7; // Monday=0
-    const names = ['Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag', 'Søndag'];
-    return `${names[day]} (${formatShortDate(date)})`;
+    const names = ['Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør', 'Søn'];
+    return names[day] ?? '';
+  }
+
+  dayDate(dateIso: string): string {
+    const date = parseIsoDate(dateIso);
+    return formatShortDate(date);
   }
 
   async saveDay(day: MealPlanDay): Promise<void> {
@@ -140,4 +145,3 @@ function isoWeekNumber(dateLocal: Date): number {
   const weekNo = Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
   return weekNo;
 }
-

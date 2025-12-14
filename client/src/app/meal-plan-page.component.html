@@ -17,7 +17,10 @@
       <div class="days">
         <div class="day" *ngFor="let day of days">
           <div class="day-head">
-            <div class="day-name">{{ dayLabel(day.date) }}</div>
+            <div class="day-name">
+              <span class="day-short">{{ dayShort(day.date) }}</span>
+              <span class="day-date muted">{{ dayDate(day.date) }}</span>
+            </div>
             <div class="day-actions">
               <button
                 pButton
@@ -28,26 +31,19 @@
                 (click)="clearDay(day)"
                 aria-label="Ryd"
               ></button>
-              <button
-                pButton
-                type="button"
-                icon="pi pi-save"
-                class="p-button-text"
-                [loading]="isSaving(day.date)"
-                (click)="saveDay(day)"
-                aria-label="Gem"
-              ></button>
             </div>
           </div>
 
-          <input
-            pInputText
+          <textarea
+            pInputTextarea
             class="dinner-input"
             [(ngModel)]="day.dinner"
             [ngModelOptions]="{ standalone: true }"
             placeholder="Aftensmad…"
+            [autoResize]="true"
+            rows="2"
             (blur)="saveDay(day)"
-          />
+          ></textarea>
         </div>
       </div>
     </div>
