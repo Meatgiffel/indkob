@@ -7,12 +7,16 @@
 .shop-tools {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.6rem;
+  row-gap: 0.5rem;
   margin-bottom: 0.6rem;
 }
 
-.shop-tools ::ng-deep .filter {
-  min-width: 160px;
+.shop-tools p-dropdown {
+  flex: 1 1 170px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .counts {
@@ -27,6 +31,23 @@
 .count.muted {
   color: var(--muted);
   font-weight: 600;
+}
+
+@media (max-width: 520px) {
+  .shop-tools > p-dropdown {
+    order: 1;
+  }
+
+  .shop-tools > button {
+    order: 2;
+  }
+
+  .counts {
+    order: 10;
+    margin-left: 0;
+    flex: 1 1 100%;
+    justify-content: space-between;
+  }
 }
 
 .groups {

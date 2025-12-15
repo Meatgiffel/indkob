@@ -18,9 +18,14 @@
         </div>
       </div>
       <div class="toolbar-right" *ngIf="auth.user$ | async as user; else loggedOutToolbar">
-        <p-tag severity="success" icon="pi pi-bolt" value="Live opdateringer"></p-tag>
-        <p-tag severity="info" icon="pi pi-cloud-download" value="PWA klar"></p-tag>
-        <button pButton type="button" label="Handle" icon="pi pi-shopping-cart" [routerLink]="['/shop']"></button>
+        <div class="status-pills" aria-label="Status">
+          <span class="status-pill live" title="Live opdateringer" aria-label="Live opdateringer">
+            <i class="pi pi-bolt"></i>
+          </span>
+          <span class="status-pill pwa" title="PWA klar" aria-label="PWA klar">
+            <i class="pi pi-cloud-download"></i>
+          </span>
+        </div>
         <button pButton type="button" class="p-button-text" icon="pi pi-sign-out" label="Log ud" (click)="logout()"></button>
       </div>
       <ng-template #loggedOutToolbar>

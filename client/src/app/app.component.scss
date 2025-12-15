@@ -76,6 +76,35 @@
   gap: 0.6rem;
 }
 
+.status-pills {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.status-pill {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border-strong);
+  background: rgba(15, 23, 42, 0.03);
+  color: var(--muted);
+}
+
+.status-pill.live {
+  background: rgba(15, 169, 167, 0.12);
+  border-color: rgba(15, 169, 167, 0.18);
+  color: var(--primary-strong);
+}
+
+.status-pill.pwa {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.18);
+  color: #1d4ed8;
+}
+
 .layout {
   margin-top: 0.9rem;
   display: grid;
