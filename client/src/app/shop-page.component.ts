@@ -6,28 +6,45 @@ import { CardModule } from 'primeng/card';
 import { DropdownModule } from 'primeng/dropdown';
 import { ButtonModule } from 'primeng/button';
 import { MessageService } from 'primeng/api';
+import { DialogModule } from 'primeng/dialog';
 
 import { ApiService } from './services/api.service';
 import { GroceryEntry } from './models';
 import { parseHttpError } from './services/http-error';
 
+type RowFeedbackState = 'idle' | 'saving' | 'saved' | 'error';
+
+type RowFeedback = {
+  state: RowFeedbackState;
+  showSavingIcon: boolean;
+  savingIconDelayHandle: ReturnType<typeof setTimeout> | null;
+  resetHandle: ReturnType<typeof setTimeout> | null;
+};
+
 @Component({
   selector: 'app-shop-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, CardModule, DropdownModule, ButtonModule],
+  imports: [CommonModule, FormsModule, CardModule, DropdownModule, ButtonModule, DialogModule],
   templateUrl: './shop-page.component.html',
   styleUrl: './shop-page.component.scss'
 })
 export class ShopPageComponent implements OnInit {
   entries: GroceryEntry[] = [];
   loadingEntries = false;
+  clearingList = false;
+  clearDialogOpen = false;
   doneFilter: 'all' | 'done' | 'open' = 'open';
   readonly doneFilterOptions = [
     { label: 'Alle', value: 'all' as const },
     { label: 'Færdige', value: 'done' as const },
     { label: 'Mangler', value: 'open' as const }
   ];
-  private updating = new Set<number>();
+  private readonly pendingDoneById = new Map<number, boolean>();
+  private readonly confirmedDoneById = new Map<number, boolean>();
+  private readonly inFlightById = new Set<number>();
+  private readonly feedbackById = new Map<number, RowFeedback>();
+  confirmingEntryId: number | null = null;
+  private confirmResetHandle: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     private api: ApiService,
@@ -46,9 +63,13 @@ export class ShopPageComponent implements OnInit {
     return this.entries.filter(e => e.isDone).length;
   }
 
+  get totalCount(): number {
+    return this.entries.length;
+  }
+
   private get visibleEntries(): GroceryEntry[] {
-    if (this.doneFilter === 'done') return this.entries.filter(e => e.isDone);
-    if (this.doneFilter === 'open') return this.entries.filter(e => !e.isDone);
+    if (this.doneFilter === 'done') return this.entries.filter(e => e.isDone || this.isUpdating(e));
+    if (this.doneFilter === 'open') return this.entries.filter(e => !e.isDone || this.isUpdating(e));
     return this.entries;
   }
 
@@ -77,7 +98,9 @@ export class ShopPageComponent implements OnInit {
   async loadEntries(): Promise<void> {
     this.loadingEntries = true;
     try {
-      this.entries = await firstValueFrom(this.api.getEntries());
+      const entries = await firstValueFrom(this.api.getEntries());
+      this.entries = entries;
+      this.resetLocalState(entries);
     } catch (err: any) {
       this.toast.add({ severity: 'error', summary: 'Fejl', detail: parseHttpError(err, 'Kunne ikke hente indkøbsseddel.') });
     } finally {
@@ -85,31 +108,178 @@ export class ShopPageComponent implements OnInit {
     }
   }
 
+  openClearDialog(): void {
+    if (!this.totalCount) return;
+    this.clearDialogOpen = true;
+  }
+
+  closeClearDialog(): void {
+    if (this.clearingList) return;
+    this.clearDialogOpen = false;
+  }
+
+  async confirmClearList(): Promise<void> {
+    if (this.clearingList) return;
+    this.clearingList = true;
+    try {
+      await firstValueFrom(this.api.clearEntries());
+      this.toast.add({ severity: 'success', summary: 'Ryddet', detail: 'Indkøbssedlen er tømt.' });
+      this.clearDialogOpen = false;
+      await this.loadEntries();
+    } catch (err: any) {
+      this.toast.add({ severity: 'error', summary: 'Fejl', detail: parseHttpError(err, 'Kunne ikke rydde indkøbsseddel.') });
+    } finally {
+      this.clearingList = false;
+    }
+  }
+
   isUpdating(entry: GroceryEntry): boolean {
-    return this.updating.has(entry.id);
+    return this.inFlightById.has(entry.id);
+  }
+
+  rowFeedbackState(entryId: number): RowFeedbackState {
+    const feedback = this.getFeedback(entryId);
+    if (feedback.state !== 'saving') return feedback.state;
+    return feedback.showSavingIcon ? 'saving' : 'idle';
   }
 
   async toggleDone(entry: GroceryEntry): Promise<void> {
     if (this.isUpdating(entry)) return;
 
-    const previous = entry.isDone;
-    entry.isDone = !previous;
-    this.updating.add(entry.id);
+    if (entry.isDone) {
+      this.clearConfirm();
+      entry.isDone = false;
+      this.pendingDoneById.set(entry.id, false);
+      await this.flushEntryUpdate(entry);
+      return;
+    }
+
+    if (this.confirmingEntryId === entry.id) {
+      await this.confirmDone(entry);
+      return;
+    }
+
+    this.startConfirm(entry.id);
+  }
+
+  async confirmDone(entry: GroceryEntry): Promise<void> {
+    if (this.isUpdating(entry) || entry.isDone) return;
+    this.clearConfirm();
+    entry.isDone = true;
+    this.pendingDoneById.set(entry.id, true);
+    await this.flushEntryUpdate(entry);
+  }
+
+  cancelConfirm(entryId?: number): void {
+    if (entryId !== undefined && this.confirmingEntryId !== entryId) return;
+    this.clearConfirm();
+  }
+
+  private resetLocalState(entries: GroceryEntry[]): void {
+    for (const feedback of this.feedbackById.values()) {
+      this.clearFeedbackTimers(feedback);
+    }
+    this.pendingDoneById.clear();
+    this.confirmedDoneById.clear();
+    this.inFlightById.clear();
+    this.feedbackById.clear();
+    this.clearConfirm();
+
+    for (const entry of entries) {
+      this.confirmedDoneById.set(entry.id, entry.isDone);
+    }
+  }
+
+  private async flushEntryUpdate(entry: GroceryEntry): Promise<void> {
+    const entryId = entry.id;
+    if (this.inFlightById.has(entryId)) return;
+
+    const desired = this.pendingDoneById.get(entryId);
+    if (desired === undefined) return;
+
+    this.pendingDoneById.delete(entryId);
+    this.inFlightById.add(entryId);
+
+    const feedback = this.getFeedback(entryId);
+    feedback.state = 'saving';
+    feedback.showSavingIcon = false;
+    this.clearFeedbackTimers(feedback);
+    feedback.savingIconDelayHandle = setTimeout(() => {
+      const latest = this.feedbackById.get(entryId);
+      if (!latest) return;
+      if (latest.state === 'saving' && this.inFlightById.has(entryId)) latest.showSavingIcon = true;
+    }, 250);
 
     try {
       await firstValueFrom(
-        this.api.updateEntry(entry.id, {
+        this.api.updateEntry(entryId, {
           itemId: entry.itemId,
           amount: entry.amount ?? null,
           note: entry.note ?? null,
-          isDone: entry.isDone
+          isDone: desired
         })
       );
+
+      this.confirmedDoneById.set(entryId, desired);
+      feedback.state = 'saved';
+      feedback.showSavingIcon = false;
+      this.clearFeedbackTimers(feedback);
+      feedback.resetHandle = setTimeout(() => {
+        const latest = this.feedbackById.get(entryId);
+        if (latest?.state === 'saved') latest.state = 'idle';
+      }, 900);
     } catch (err: any) {
-      entry.isDone = previous;
+      const confirmed = this.confirmedDoneById.get(entryId);
+      entry.isDone = confirmed ?? !desired;
+      this.pendingDoneById.delete(entryId);
+      feedback.state = 'error';
+      feedback.showSavingIcon = false;
+      this.clearFeedbackTimers(feedback);
+      feedback.resetHandle = setTimeout(() => {
+        const latest = this.feedbackById.get(entryId);
+        if (latest?.state === 'error') latest.state = 'idle';
+      }, 2000);
+
       this.toast.add({ severity: 'error', summary: 'Fejl', detail: parseHttpError(err, 'Kunne ikke opdatere status.') });
     } finally {
-      this.updating.delete(entry.id);
+      this.inFlightById.delete(entryId);
+    }
+
+    if (this.pendingDoneById.has(entryId)) {
+      await this.flushEntryUpdate(entry);
+    }
+  }
+
+  private getFeedback(entryId: number): RowFeedback {
+    const existing = this.feedbackById.get(entryId);
+    if (existing) return existing;
+    const created: RowFeedback = { state: 'idle', showSavingIcon: false, savingIconDelayHandle: null, resetHandle: null };
+    this.feedbackById.set(entryId, created);
+    return created;
+  }
+
+  private clearFeedbackTimers(feedback: RowFeedback): void {
+    if (feedback.savingIconDelayHandle) {
+      clearTimeout(feedback.savingIconDelayHandle);
+      feedback.savingIconDelayHandle = null;
+    }
+    if (feedback.resetHandle) {
+      clearTimeout(feedback.resetHandle);
+      feedback.resetHandle = null;
+    }
+  }
+
+  private startConfirm(entryId: number): void {
+    this.clearConfirm();
+    this.confirmingEntryId = entryId;
+    this.confirmResetHandle = setTimeout(() => this.clearConfirm(), 3500);
+  }
+
+  private clearConfirm(): void {
+    this.confirmingEntryId = null;
+    if (this.confirmResetHandle) {
+      clearTimeout(this.confirmResetHandle);
+      this.confirmResetHandle = null;
     }
   }
 }

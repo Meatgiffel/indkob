@@ -1,5 +1,5 @@
 .meal-plan-card :host ::ng-deep .p-card-body {
-  padding: 1rem;
+  padding: 0.65rem;
   overflow-x: hidden;
 }
 
@@ -8,12 +8,12 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .label {
   font-weight: 800;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
 }
 
 .sub {
@@ -31,34 +31,21 @@
   justify-content: flex-end;
 }
 
-.days-scroll {
-  overflow-x: auto;
-  max-width: 100%;
-  padding-bottom: 2px;
-  -webkit-overflow-scrolling: touch;
-}
-
-.days {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.day {
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-  padding: 10px;
+.day-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.day-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+.day-row {
+  display: grid;
+  grid-template-columns: 86px 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
 }
 
 .day-name {
@@ -78,15 +65,54 @@
   font-weight: 600;
 }
 
-.day-actions {
+.day-meta {
   display: flex;
-  gap: 4px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.day-meta-top {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .dinner-input {
   width: 100%;
-  min-height: 3.6rem;
+  min-height: 5.25rem;
   line-height: 1.25;
+  padding: 0.5rem 0.6rem;
+}
+
+.save-state {
+  font-size: 0.82rem;
+  min-height: 1.05rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.save-state .pi {
+  font-size: 0.85rem;
+}
+
+.save-state .error {
+  color: #b91c1c;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .empty {
@@ -104,8 +130,12 @@
     justify-content: flex-start;
   }
 
-  .days {
-    grid-template-columns: repeat(7, minmax(220px, 1fr));
-    min-width: 1540px;
+  .day-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .day-meta-top {
+    align-items: center;
   }
 }

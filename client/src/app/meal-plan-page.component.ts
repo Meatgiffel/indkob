@@ -15,6 +15,18 @@ type MealPlanDay = {
   dinner: string | null;
 };
 
+type SaveState = 'idle' | 'dirty' | 'saving' | 'saved' | 'error';
+
+type DaySaveStatus = {
+  state: SaveState;
+  dirty: boolean;
+  lastSavedNormalized: string;
+  debounceHandle: ReturnType<typeof setTimeout> | null;
+  savingIconDelayHandle: ReturnType<typeof setTimeout> | null;
+  showSavingIcon: boolean;
+  resetHandle: ReturnType<typeof setTimeout> | null;
+};
+
 @Component({
   selector: 'app-meal-plan-page',
   standalone: true,
@@ -27,6 +39,7 @@ export class MealPlanPageComponent implements OnInit {
   weekStart = startOfWeek(new Date());
   days: MealPlanDay[] = [];
   private saving = new Set<string>();
+  private readonly statusByDate = new Map<string, DaySaveStatus>();
 
   constructor(
     private api: ApiService,
@@ -49,10 +62,17 @@ export class MealPlanPageComponent implements OnInit {
     return this.saving.has(date);
   }
 
+  saveState(date: string): SaveState {
+    const status = this.getStatus(date);
+    if (status.state !== 'saving') return status.state;
+    return status.showSavingIcon ? 'saving' : 'dirty';
+  }
+
   async load(): Promise<void> {
     this.loading = true;
     try {
       const response = await firstValueFrom(this.api.getMealPlanWeek(this.weekStart));
+      this.resetStatuses(response);
       this.days = response;
     } catch (err: any) {
       this.toast.add({ severity: 'error', summary: 'Fejl', detail: parseHttpError(err, 'Kunne ikke hente madplan.') });
@@ -92,24 +112,139 @@ export class MealPlanPageComponent implements OnInit {
     return formatShortDate(date);
   }
 
+  onDinnerChange(day: MealPlanDay): void {
+    const status = this.getStatus(day.date);
+    status.dirty = true;
+    status.state = 'dirty';
+    this.clearResetHandle(status);
+    this.scheduleSave(day);
+  }
+
   async saveDay(day: MealPlanDay): Promise<void> {
-    if (this.isSaving(day.date)) return;
+    if (this.isSaving(day.date)) {
+      this.scheduleSave(day);
+      return;
+    }
+
+    const status = this.getStatus(day.date);
+    this.clearDebounceHandle(status);
 
     const dinner = (day.dinner ?? '').trim();
+    if (!status.dirty && dinner === status.lastSavedNormalized) return;
+    if (dinner === status.lastSavedNormalized) {
+      status.dirty = false;
+      status.state = 'saved';
+      this.scheduleResetSaved(day.date);
+      return;
+    }
+
+    status.state = 'saving';
+    status.showSavingIcon = false;
+    this.clearSavingIconDelayHandle(status);
+    status.savingIconDelayHandle = setTimeout(() => {
+      const latest = this.statusByDate.get(day.date);
+      if (latest?.state === 'saving') latest.showSavingIcon = true;
+    }, 250);
+
     this.saving.add(day.date);
     try {
       const updated = await firstValueFrom(this.api.upsertMealPlanDay(day.date, dinner || null));
       day.dinner = updated.dinner;
+      status.lastSavedNormalized = (updated.dinner ?? '').trim();
+      status.dirty = false;
+      status.state = 'saved';
+      status.showSavingIcon = false;
+      this.clearSavingIconDelayHandle(status);
+      this.scheduleResetSaved(day.date);
     } catch (err: any) {
       this.toast.add({ severity: 'error', summary: 'Fejl', detail: parseHttpError(err, 'Kunne ikke gemme madplan.') });
+      status.state = 'error';
+      status.showSavingIcon = false;
+      this.clearSavingIconDelayHandle(status);
     } finally {
       this.saving.delete(day.date);
     }
   }
 
   async clearDay(day: MealPlanDay): Promise<void> {
+    const status = this.getStatus(day.date);
+    this.clearDebounceHandle(status);
+    this.clearResetHandle(status);
+    status.dirty = true;
     day.dinner = null;
     await this.saveDay(day);
+  }
+
+  private scheduleSave(day: MealPlanDay): void {
+    const status = this.getStatus(day.date);
+    this.clearDebounceHandle(status);
+    status.debounceHandle = setTimeout(() => void this.saveDay(day), 900);
+  }
+
+  private resetStatuses(days: MealPlanDay[]): void {
+    for (const status of this.statusByDate.values()) {
+      this.clearDebounceHandle(status);
+      this.clearSavingIconDelayHandle(status);
+      this.clearResetHandle(status);
+    }
+    this.statusByDate.clear();
+    this.saving.clear();
+
+    for (const day of days) {
+      this.statusByDate.set(day.date, {
+        state: 'idle',
+        dirty: false,
+        lastSavedNormalized: (day.dinner ?? '').trim(),
+        debounceHandle: null,
+        savingIconDelayHandle: null,
+        showSavingIcon: false,
+        resetHandle: null
+      });
+    }
+  }
+
+  private getStatus(date: string): DaySaveStatus {
+    const existing = this.statusByDate.get(date);
+    if (existing) return existing;
+
+    const created: DaySaveStatus = {
+      state: 'idle',
+      dirty: false,
+      lastSavedNormalized: '',
+      debounceHandle: null,
+      savingIconDelayHandle: null,
+      showSavingIcon: false,
+      resetHandle: null
+    };
+    this.statusByDate.set(date, created);
+    return created;
+  }
+
+  private scheduleResetSaved(date: string): void {
+    const status = this.getStatus(date);
+    this.clearResetHandle(status);
+    status.resetHandle = setTimeout(() => {
+      const latest = this.statusByDate.get(date);
+      if (latest && latest.state === 'saved') latest.state = 'idle';
+    }, 2000);
+  }
+
+  private clearDebounceHandle(status: DaySaveStatus): void {
+    if (!status.debounceHandle) return;
+    clearTimeout(status.debounceHandle);
+    status.debounceHandle = null;
+  }
+
+  private clearResetHandle(status: DaySaveStatus): void {
+    if (!status.resetHandle) return;
+    clearTimeout(status.resetHandle);
+    status.resetHandle = null;
+  }
+
+  private clearSavingIconDelayHandle(status: DaySaveStatus): void {
+    if (!status.savingIconDelayHandle) return;
+    clearTimeout(status.savingIconDelayHandle);
+    status.savingIconDelayHandle = null;
   }
 }
 

@@ -14,6 +14,8 @@ namespace Api.Controllers;
 [Route("api/[controller]")]
 public class AuthController(AppDbContext db) : ControllerBase
 {
+    private static readonly TimeSpan RememberMeDuration = TimeSpan.FromDays(30);
+
     [HttpPost("login")]
     [AllowAnonymous]
     public async Task<ActionResult<AuthUserDto>> Login([FromBody] LoginRequest request)
@@ -42,7 +44,18 @@ public class AuthController(AppDbContext db) : ControllerBase
 
         var identity = AuthConstants.CreateIdentity(user.Id, user.UserName, user.IsAdmin);
         var principal = new ClaimsPrincipal(identity);
-        await HttpContext.SignInAsync(AuthConstants.CookieScheme, principal);
+
+        AuthenticationProperties? authProperties = null;
+        if (request.RememberMe)
+        {
+            authProperties = new AuthenticationProperties
+            {
+                IsPersistent = true,
+                ExpiresUtc = DateTimeOffset.UtcNow.Add(RememberMeDuration)
+            };
+        }
+
+        await HttpContext.SignInAsync(AuthConstants.CookieScheme, principal, authProperties);
 
         return Ok(new AuthUserDto(user.Id, user.UserName, user.IsAdmin));
     }
@@ -75,4 +88,3 @@ public class AuthController(AppDbContext db) : ControllerBase
         return Ok(new AuthUserDto(id, name, isAdmin));
     }
 }
-

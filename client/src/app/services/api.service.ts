@@ -22,8 +22,8 @@ export class ApiService {
     return this.http.get<AuthUser>(`${this.baseUrl}/auth/me`);
   }
 
-  login(userName: string, password: string): Observable<AuthUser> {
-    return this.http.post<AuthUser>(`${this.baseUrl}/auth/login`, { userName, password });
+  login(userName: string, password: string, rememberMe: boolean): Observable<AuthUser> {
+    return this.http.post<AuthUser>(`${this.baseUrl}/auth/login`, { userName, password, rememberMe });
   }
 
   logout(): Observable<void> {
@@ -76,5 +76,9 @@ export class ApiService {
 
   deleteEntry(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/groceryentries/${id}`);
+  }
+
+  clearEntries(): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/groceryentries/clear`, {});
   }
 }

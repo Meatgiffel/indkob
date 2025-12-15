@@ -6,6 +6,7 @@ import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { ButtonModule } from 'primeng/button';
+import { CheckboxModule } from 'primeng/checkbox';
 import { MessageService } from 'primeng/api';
 import { AuthService } from './services/auth.service';
 import { parseHttpError } from './services/http-error';
@@ -14,7 +15,7 @@ import { BuildInfoService } from './services/build-info.service';
 @Component({
   selector: 'app-login-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, CardModule, InputTextModule, PasswordModule, ButtonModule],
+  imports: [CommonModule, ReactiveFormsModule, CardModule, InputTextModule, PasswordModule, ButtonModule, CheckboxModule],
   templateUrl: './login-page.component.html',
   styleUrl: './login-page.component.scss'
 })
@@ -24,7 +25,8 @@ export class LoginPageComponent implements OnInit {
 
   form = this.fb.group({
     userName: ['', Validators.required],
-    password: ['', Validators.required]
+    password: ['', Validators.required],
+    rememberMe: [false]
   });
 
   constructor(
@@ -53,10 +55,11 @@ export class LoginPageComponent implements OnInit {
 
     const userName = this.form.value.userName!.trim();
     const password = this.form.value.password!;
+    const rememberMe = !!this.form.value.rememberMe;
 
     this.loading = true;
     try {
-      await this.auth.login(userName, password);
+      await this.auth.login(userName, password, rememberMe);
       await this.navigateAfterLogin();
     } catch (err: any) {
       this.toast.add({ severity: 'error', summary: 'Login fejlede', detail: parseHttpError(err, 'Forkert login.') });

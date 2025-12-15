@@ -27,6 +27,12 @@
   gap: 6px;
 }
 
+.field.checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
 .login-page :host ::ng-deep input.p-inputtext {
   width: 100%;
 }

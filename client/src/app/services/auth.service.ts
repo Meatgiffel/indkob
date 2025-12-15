@@ -31,8 +31,8 @@ export class AuthService {
     }
   }
 
-  async login(userName: string, password: string): Promise<AuthUser> {
-    const user = await firstValueFrom(this.api.login(userName, password));
+  async login(userName: string, password: string, rememberMe: boolean): Promise<AuthUser> {
+    const user = await firstValueFrom(this.api.login(userName, password, rememberMe));
     this.userSubject.next(user);
     return user;
   }
@@ -46,4 +46,3 @@ export class AuthService {
     }
   }
 }
-

@@ -7,44 +7,62 @@
       </div>
 
       <div class="nav">
-        <button pButton type="button" icon="pi pi-angle-left" label="Forrige" class="p-button-text" (click)="previousWeek()"></button>
-        <button pButton type="button" icon="pi pi-calendar" label="Denne uge" class="p-button-text" (click)="goToCurrentWeek()"></button>
-        <button pButton type="button" icon="pi pi-angle-right" label="Næste" class="p-button-text" (click)="nextWeek()"></button>
+        <button pButton type="button" icon="pi pi-angle-left" label="Forrige" class="p-button-text p-button-sm" (click)="previousWeek()"></button>
+        <button pButton type="button" icon="pi pi-calendar" label="Denne uge" class="p-button-text p-button-sm" (click)="goToCurrentWeek()"></button>
+        <button pButton type="button" icon="pi pi-angle-right" label="Næste" class="p-button-text p-button-sm" (click)="nextWeek()"></button>
       </div>
     </div>
 
-    <div class="days-scroll" *ngIf="days.length; else loadingState">
-      <div class="days">
-        <div class="day" *ngFor="let day of days">
-          <div class="day-head">
+    <div class="day-list" *ngIf="days.length; else loadingState">
+      <div class="day-row" *ngFor="let day of days">
+        <div class="day-meta">
+          <div class="day-meta-top">
             <div class="day-name">
               <span class="day-short">{{ dayShort(day.date) }}</span>
               <span class="day-date muted">{{ dayDate(day.date) }}</span>
             </div>
-            <div class="day-actions">
-              <button
-                pButton
-                type="button"
-                icon="pi pi-trash"
-                class="p-button-text p-button-danger"
-                [disabled]="isSaving(day.date) || !day.dinner"
-                (click)="clearDay(day)"
-                aria-label="Ryd"
-              ></button>
-            </div>
+            <button
+              pButton
+              type="button"
+              icon="pi pi-trash"
+              class="p-button-text p-button-danger p-button-sm"
+              [disabled]="isSaving(day.date) || !day.dinner"
+              (click)="clearDay(day)"
+              aria-label="Ryd"
+            ></button>
           </div>
 
-          <textarea
-            pInputTextarea
-            class="dinner-input"
-            [(ngModel)]="day.dinner"
-            [ngModelOptions]="{ standalone: true }"
-            placeholder="Aftensmad…"
-            [autoResize]="true"
-            rows="2"
-            (blur)="saveDay(day)"
-          ></textarea>
+          <div class="save-state" aria-live="polite" aria-atomic="true">
+            <span *ngIf="saveState(day.date) === 'saving'" title="Gemmer…">
+              <i class="pi pi-spin pi-spinner"></i>
+              <span class="sr-only">Gemmer…</span>
+            </span>
+            <span *ngIf="saveState(day.date) === 'saved'" title="Gemt">
+              <i class="pi pi-check"></i>
+              <span class="sr-only">Gemt</span>
+            </span>
+            <span *ngIf="saveState(day.date) === 'error'" class="error" title="Ikke gemt">
+              <i class="pi pi-exclamation-triangle"></i>
+              <span class="sr-only">Ikke gemt</span>
+            </span>
+            <span *ngIf="saveState(day.date) === 'dirty'" class="muted" title="Ikke gemt endnu">
+              <i class="pi pi-pencil"></i>
+              <span class="sr-only">Ikke gemt endnu</span>
+            </span>
+          </div>
         </div>
+
+        <textarea
+          pInputTextarea
+          class="dinner-input"
+          [(ngModel)]="day.dinner"
+          (ngModelChange)="onDinnerChange(day)"
+          [ngModelOptions]="{ standalone: true }"
+          placeholder="Aftensmad…"
+          [autoResize]="true"
+          rows="3"
+          (blur)="saveDay(day)"
+        ></textarea>
       </div>
     </div>
 

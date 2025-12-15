@@ -25,6 +25,18 @@
         (click)="loadEntries()"
         aria-label="Opdater"
       ></button>
+
+      <button
+        pButton
+        type="button"
+        icon="pi pi-trash"
+        rounded
+        text
+        severity="danger"
+        [disabled]="!totalCount"
+        (click)="openClearDialog()"
+        aria-label="Ryd liste"
+      ></button>
     </div>
 
     <div class="groups" *ngIf="groupedEntries.length; else empty">
@@ -37,9 +49,14 @@
             *ngFor="let entry of group.entries"
             [class.done]="entry.isDone"
             [class.updating]="isUpdating(entry)"
+            [class.confirming]="confirmingEntryId === entry.id"
+            [class.just-saved]="rowFeedbackState(entry.id) === 'saved'"
+            [class.just-error]="rowFeedbackState(entry.id) === 'error'"
             (click)="toggleDone(entry)"
             tabindex="0"
             role="button"
+            (keydown.enter)="toggleDone(entry); $event.preventDefault()"
+            (keydown.space)="toggleDone(entry); $event.preventDefault()"
           >
             <div class="check" [class.done]="entry.isDone"><i class="pi" [ngClass]="entry.isDone ? 'pi-check' : 'pi-circle'"></i></div>
             <div class="main">
@@ -48,6 +65,33 @@
                 <span *ngIf="entry.amount">{{ entry.amount }}</span>
                 <span *ngIf="entry.note && entry.itemId">{{ entry.note }}</span>
               </div>
+            </div>
+            <div class="status" [class.confirm-actions]="confirmingEntryId === entry.id && !entry.isDone">
+              <ng-container *ngIf="confirmingEntryId === entry.id && !entry.isDone; else feedbackIcons">
+                <button
+                  type="button"
+                  class="icon-btn ok"
+                  aria-label="Bekræft færdig"
+                  title="Bekræft"
+                  (click)="confirmDone(entry); $event.stopPropagation()"
+                >
+                  <i class="pi pi-check"></i>
+                </button>
+                <button
+                  type="button"
+                  class="icon-btn cancel"
+                  aria-label="Annuller"
+                  title="Annuller"
+                  (click)="cancelConfirm(entry.id); $event.stopPropagation()"
+                >
+                  <i class="pi pi-times"></i>
+                </button>
+              </ng-container>
+              <ng-template #feedbackIcons>
+                <i *ngIf="rowFeedbackState(entry.id) === 'saving'" class="pi pi-spin pi-spinner" title="Gemmer…"></i>
+                <i *ngIf="rowFeedbackState(entry.id) === 'saved'" class="pi pi-check" title="Gemt"></i>
+                <i *ngIf="rowFeedbackState(entry.id) === 'error'" class="pi pi-exclamation-triangle" title="Ikke gemt"></i>
+              </ng-template>
             </div>
           </div>
         </div>
@@ -62,3 +106,28 @@
     </ng-template>
   </p-card>
 </div>
+
+<p-dialog
+  header="Ryd indkøbsseddel"
+  [(visible)]="clearDialogOpen"
+  [modal]="true"
+  [closable]="!clearingList"
+  [dismissableMask]="!clearingList"
+  [style]="{ width: 'min(560px, 94vw)' }"
+  (onHide)="closeClearDialog()"
+>
+  <div class="clear-dialog">
+    <div class="warning">
+      <i class="pi pi-exclamation-triangle"></i>
+      <div>
+        <div class="title">Er du sikker?</div>
+        <div class="text muted">Dette sletter hele indkøbssedlen ({{ totalCount }} linjer) og kan ikke fortrydes.</div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button pButton type="button" class="p-button-text" label="Annuller" (click)="closeClearDialog()" [disabled]="clearingList"></button>
+      <button pButton type="button" label="Ryd liste" icon="pi pi-trash" severity="danger" (click)="confirmClearList()" [loading]="clearingList"></button>
+    </div>
+  </div>
+</p-dialog>

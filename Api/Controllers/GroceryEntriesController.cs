@@ -176,4 +176,11 @@ public class GroceryEntriesController(AppDbContext db) : ControllerBase
         await db.SaveChangesAsync();
         return NoContent();
     }
+
+    [HttpPost("clear")]
+    public async Task<IActionResult> Clear()
+    {
+        await db.GroceryEntries.ExecuteDeleteAsync();
+        return NoContent();
+    }
 }

@@ -17,6 +17,11 @@
         ></p-password>
       </div>
 
+      <div class="field checkbox">
+        <p-checkbox inputId="rememberMe" formControlName="rememberMe" [binary]="true"></p-checkbox>
+        <label for="rememberMe">Husk mig</label>
+      </div>
+
       <button pButton type="submit" class="login-button" label="Log ind" icon="pi pi-sign-in" [loading]="loading"></button>
 
       <div class="build-info" *ngIf="buildInfo.buildInfo$ | async as info">
