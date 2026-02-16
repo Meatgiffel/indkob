@@ -8,12 +8,18 @@ Indkøb er en lille PWA til en delt indkøbsliste. Du vedligeholder et varekatal
 - Varekatalog med hurtig oprettelse og inline redigering.
 - Indkøbsseddel der grupperer efter område.
 - “Handle”-visning der prioriterer tæt liste og touch.
+- Ugentlig madplan (aftensmad) med autosave.
 - PWA (offline-klar), PrimeNG UI.
 - Simpelt login (brugernavn + password) og bruger-administration.
 
 ## Teknologi
 - Frontend: Angular (standalone) + PrimeNG/PrimeFlex (`client/`).
-- Backend: ASP.NET Core + EF Core + SQLite (`Api/`).
+- Backend: ASP.NET Core (.NET 10) + EF Core + SQLite (`Api/`).
+
+## Dokumentation
+- API contract: `docs/api-contract.md`
+- Prioriteret hardening-plan: `docs/hardening-plan.md`
+- Agent/repo guidelines: `AGENTS.md`
 
 ## Kør lokalt
 ### API
@@ -25,6 +31,8 @@ dotnet ef database update
 dotnet run
 ```
 
+Kræver .NET 10 SDK.
+
 ### Client
 ```bash
 cd client
@@ -32,6 +40,8 @@ npm install
 npm start
 # http://localhost:4200
 ```
+
+Anbefalet Node.js: LTS (samme major som i CI er 20).
 
 ## Deployment til LXC (anbefalet)
 Setup’et her gør, at din LXC ikke behøver Node eller .NET. GitHub Actions bygger en release, og LXC downloader bare seneste bundle og genstarter services.

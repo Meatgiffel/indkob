@@ -1,9 +1,9 @@
 # Repository Guidelines
 
 ## Project Structure & Modules
-- `client/`: Angular standalone app with PrimeNG/PrimeFlex UI. Entry `src/main.ts`; shell/layout in `src/app/app.component.*`; pages `list-page` (grocery list) and `items-page` (catalog). Global styles in `src/styles.scss`. Assets in `src/assets/` (logo, icons).
-- `Api/`: .NET 8 minimal API with SQLite; entry `Api/Program.cs`; data in `Api/Data` and migrations in `Api/Migrations`. Local DB files are checked in; recreate via EF if needed.
-- Root: repo-level `.gitignore`, docs (`README.md`, `codex.md`, `AGENTS.md`).
+- `client/`: Angular standalone app with PrimeNG/PrimeFlex UI. Entry `src/main.ts`; shell/layout in `src/app/app.component.*`; pages `login-page`, `list-page`, `shop-page`, `meal-plan-page`, `items-page`, and admin `users-page`. Global styles in `src/styles.scss`. Assets in `src/assets/` (logo, icons).
+- `Api/`: ASP.NET Core (.NET 10) API with SQLite; entry `Api/Program.cs`; data in `Api/Data`, controllers in `Api/Controllers`, DTOs in `Api/Dtos`, and migrations in `Api/Migrations`.
+- Root: repo-level `.gitignore`, docs (`README.md`, `AGENTS.md`, `docs/api-contract.md`, `docs/hardening-plan.md`).
 
 ## Build, Test, Dev Commands
 - Client dev: `cd client && npm install && npm start` (ng serve, defaults to 4200).
@@ -13,7 +13,7 @@
 
 ## Coding Style & Naming
 - Angular: standalone components, SCSS; prefer descriptive names (`list-page.component.*`, `items-page.component.*`). Keep UI compact and mobile-friendly; avoid new external fonts (offline build).
-- .NET: follow minimal-API patterns already present; PascalCase for public members.
+- .NET: follow controller/API patterns already present; PascalCase for public members.
 - Indentation: 2 spaces (TS/HTML/SCSS), default C# formatting in API.
 
 ## Testing Guidelines
@@ -26,6 +26,7 @@
 
 ## Security & Configuration
 - API DB is SQLite; avoid committing secrets. Base URL is read from `client/src/environments/environment.ts`.
+- SQLite files under `Api/` are gitignored (`Api/*.db`); use migrations to recreate local DB.
 - Keep `client/src/assets/logo.png` referenced in toolbar, manifest, and favicon. Do not remove without replacing.
 
 ## Agent Notes

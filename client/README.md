@@ -3,9 +3,12 @@
 Angular-frontend til Indkøb (PWA) bygget med PrimeNG/PrimeFlex.
 
 ## Ruter
+- `/login`: Login med brugernavn/password (inkl. husk mig).
 - `/list`: Opret og vedligehold indkøbsseddel (inkl. opret vare fra søgning).
 - `/shop`: Tæt “handle”-visning med filter (Alle/Færdige/Mangler).
+- `/mealplan`: Ugevis madplan med autosave pr. dag.
 - `/items`: Varekatalog.
+- `/users`: Brugeradministration (kun admin).
 
 ## Udvikling
 ```bash
