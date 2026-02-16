@@ -4,12 +4,5 @@
     "secure": false,
     "changeOrigin": true,
     "logLevel": "warn"
-  },
-  "/hubs": {
-    "target": "http://localhost:5046",
-    "secure": false,
-    "changeOrigin": true,
-    "ws": true,
-    "logLevel": "warn"
   }
 }

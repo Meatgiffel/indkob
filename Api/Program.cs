@@ -114,6 +114,6 @@ app.UseCors(CorsPolicyName);
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-app.MapHub<GroceryHub>("/hubs/grocery");
+app.MapHub<GroceryHub>("/api/hubs/grocery");
 
 app.Run();

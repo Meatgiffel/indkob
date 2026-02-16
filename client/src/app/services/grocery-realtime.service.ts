@@ -113,7 +113,7 @@ export class GroceryRealtimeService implements OnDestroy {
     if (this.connection) return;
 
     const connection = new HubConnectionBuilder()
-      .withUrl('/hubs/grocery', {
+      .withUrl('/api/hubs/grocery', {
         withCredentials: true,
         transport: HttpTransportType.WebSockets | HttpTransportType.ServerSentEvents | HttpTransportType.LongPolling
       })

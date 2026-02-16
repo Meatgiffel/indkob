@@ -245,7 +245,7 @@ This document describes the HTTP contract implemented by the API in `Api/Control
 
 ### Hub Endpoint
 
-`GET/WS /hubs/grocery`
+`GET/WS /api/hubs/grocery`
 - Auth: required (same cookie session as HTTP API)
 - Transport: WebSockets preferred (falls back to SSE/LongPolling)
 
