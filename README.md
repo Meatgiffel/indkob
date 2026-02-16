@@ -104,3 +104,8 @@ Hvis frontend virker men API-kald fejler (fx `502 Bad Gateway`), så er det typi
 sudo systemctl status indkob-api --no-pager
 sudo journalctl -u indkob-api -n 200 --no-pager
 ```
+
+Hvis live-synk (SignalR) fejler med websocket/negotiate fejl i browser-konsol:
+- Tjek at nginx har en dedikeret proxy-location for hub-ruten (`/api/hubs/`).
+- Appen bruger LongPolling transport for at undgå websocket-proxy problemer.
+- Lav en hard refresh (eller luk/fjern gammel PWA service worker), så klienten henter nyeste bundle.

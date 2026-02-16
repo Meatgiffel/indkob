@@ -247,7 +247,8 @@ This document describes the HTTP contract implemented by the API in `Api/Control
 
 `GET/WS /api/hubs/grocery`
 - Auth: required (same cookie session as HTTP API)
-- Transport: WebSockets preferred (falls back to SSE/LongPolling)
+- Client transport: LongPolling (forced for proxy compatibility and predictable reconnect behavior)
+- Compatibility path: `/hubs/grocery` is also mapped server-side for older clients
 
 ### Server-to-Client Event
 

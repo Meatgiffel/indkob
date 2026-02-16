@@ -115,7 +115,8 @@ export class GroceryRealtimeService implements OnDestroy {
     const connection = new HubConnectionBuilder()
       .withUrl('/api/hubs/grocery', {
         withCredentials: true,
-        transport: HttpTransportType.WebSockets | HttpTransportType.ServerSentEvents | HttpTransportType.LongPolling
+        // Force long-polling to avoid websocket/proxy negotiation failures in production.
+        transport: HttpTransportType.LongPolling
       })
       .withAutomaticReconnect([0, 1500, 3000, 5000, 10000])
       .configureLogging(LogLevel.Warning)

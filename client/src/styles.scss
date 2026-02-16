@@ -28,6 +28,7 @@
   --surface-card: var(--surface);
   --surface-overlay: var(--surface);
   --surface-border: rgba(12, 29, 60, 0.18);
+  --font-family: "Segoe UI", "Helvetica Neue", Arial, system-ui, -apple-system, sans-serif;
 }
 
 *,
@@ -37,11 +38,15 @@
 }
 
 body {
-  font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-family: var(--font-family);
   background: var(--bg-gradient);
   color: var(--ink);
   margin: 0;
   line-height: 1.6;
+}
+
+.p-component {
+  font-family: var(--font-family);
 }
 
 .grid.form-grid {

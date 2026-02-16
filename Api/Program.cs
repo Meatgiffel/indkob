@@ -115,5 +115,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHub<GroceryHub>("/api/hubs/grocery");
+app.MapHub<GroceryHub>("/hubs/grocery");
 
 app.Run();
