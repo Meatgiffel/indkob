@@ -33,6 +33,7 @@ install_first_available libssl3 libssl1.1 libssl-dev || true
 useradd -r -s /usr/sbin/nologin indkob 2>/dev/null || true
 install -d -o indkob -g indkob /opt/indkob /opt/indkob/releases /var/lib/indkob
 install -d -o indkob -g indkob /var/lib/indkob/bundle-extract
+install -d -o indkob -g indkob /var/lib/indkob/dataprotection-keys
 install -d -o www-data -g www-data /var/www
 
 install -m 0755 -d /usr/local/bin

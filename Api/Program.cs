@@ -1,6 +1,7 @@
 using Api.Data;
 using Api.Auth;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,6 +12,19 @@ const string CorsPolicyName = "Client";
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+var dataProtectionKeysPath = builder.Configuration.GetValue<string>("Auth:DataProtectionKeysPath");
+if (string.IsNullOrWhiteSpace(dataProtectionKeysPath))
+{
+    dataProtectionKeysPath = builder.Environment.IsDevelopment()
+        ? Path.Combine(builder.Environment.ContentRootPath, ".aspnet-data-protection-keys")
+        : "/var/lib/indkob/dataprotection-keys";
+}
+
+Directory.CreateDirectory(dataProtectionKeysPath);
+builder.Services.AddDataProtection()
+    .SetApplicationName("indkob")
+    .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionKeysPath));
 
 builder.Services.AddAuthentication(AuthConstants.CookieScheme)
     .AddCookie(AuthConstants.CookieScheme, options =>

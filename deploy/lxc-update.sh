@@ -23,6 +23,7 @@ API_LINK="/opt/indkob/api"
 WWW_LINK="/var/www/indkob"
 DATA_DIR="/var/lib/indkob"
 BUNDLE_DIR="/var/lib/indkob/bundle-extract"
+DP_KEYS_DIR="/var/lib/indkob/dataprotection-keys"
 
 if [[ "$(id -u)" -ne 0 ]]; then
   echo "Run as root (sudo)."
@@ -60,7 +61,7 @@ maybe_install_dotnet_deps() {
 
 maybe_install_dotnet_deps
 
-install -d -m 0755 "${RELEASES_DIR}" "${DATA_DIR}" "${BUNDLE_DIR}"
+install -d -m 0755 "${RELEASES_DIR}" "${DATA_DIR}" "${BUNDLE_DIR}" "${DP_KEYS_DIR}"
 install -d -m 0755 /var/www
 
 TMP_DIR="$(mktemp -d)"
@@ -88,6 +89,7 @@ if id indkob >/dev/null 2>&1; then
   chown -R www-data:www-data "${CURRENT_DIR}/www" || true
   chown -R indkob:indkob "${DATA_DIR}" || true
   chown -R indkob:indkob "${BUNDLE_DIR}" || true
+  chown -R indkob:indkob "${DP_KEYS_DIR}" || true
 fi
 
 # Ensure the single-file bundle can extract to a writable path (works even if the unit file is old).
@@ -96,6 +98,7 @@ cat >/etc/systemd/system/indkob-api.service.d/override.conf <<'EOF'
 [Service]
 Environment=DOTNET_BUNDLE_EXTRACT_BASE_DIR=/var/lib/indkob/bundle-extract
 Environment="ConnectionStrings__DefaultConnection=Data Source=/var/lib/indkob/grocery.db"
+Environment=Auth__DataProtectionKeysPath=/var/lib/indkob/dataprotection-keys
 EOF
 
 systemctl daemon-reload || true

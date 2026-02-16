@@ -83,6 +83,7 @@ Alternativt (nemmere at huske):
 
 ### Data og ports
 - SQLite DB: `/var/lib/indkob/grocery.db` (bevares ved opdatering)
+- Data Protection keys (login-cookie krypteringsnøgler): `/var/lib/indkob/dataprotection-keys`
 - Web: nginx på port 80
 - API: lytter på `127.0.0.1:5046` og proxys via nginx `/api`
 
