@@ -240,3 +240,25 @@ This document describes the HTTP contract implemented by the API in `Api/Control
   - `404 Not Found` if user does not exist
   - `409 Conflict` if trying to delete own logged-in user
   - `409 Conflict` if trying to delete the last admin user
+
+## SignalR Realtime Contract
+
+### Hub Endpoint
+
+`GET/WS /hubs/grocery`
+- Auth: required (same cookie session as HTTP API)
+- Transport: WebSockets preferred (falls back to SSE/LongPolling)
+
+### Server-to-Client Event
+
+`groceryChanged`
+- Payload:
+  - `type: 'created' | 'updated' | 'deleted' | 'cleared'`
+  - `entryId: number | null`
+  - `atUtc: string` (ISO datetime)
+
+Event semantics:
+- `created`: a grocery entry was added
+- `updated`: a grocery entry changed (including `isDone` toggles)
+- `deleted`: one grocery entry removed
+- `cleared`: entire grocery list removed

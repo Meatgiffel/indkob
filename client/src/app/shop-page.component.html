@@ -25,18 +25,6 @@
         (click)="loadEntries()"
         aria-label="Opdater"
       ></button>
-
-      <button
-        pButton
-        type="button"
-        icon="pi pi-trash"
-        rounded
-        text
-        severity="danger"
-        [disabled]="!totalCount"
-        (click)="openClearDialog()"
-        aria-label="Ryd liste"
-      ></button>
     </div>
 
     <div class="groups" *ngIf="groupedEntries.length; else empty">
@@ -106,28 +94,3 @@
     </ng-template>
   </p-card>
 </div>
-
-<p-dialog
-  header="Ryd indkøbsseddel"
-  [(visible)]="clearDialogOpen"
-  [modal]="true"
-  [closable]="!clearingList"
-  [dismissableMask]="!clearingList"
-  [style]="{ width: 'min(560px, 94vw)' }"
-  (onHide)="closeClearDialog()"
->
-  <div class="clear-dialog">
-    <div class="warning">
-      <i class="pi pi-exclamation-triangle"></i>
-      <div>
-        <div class="title">Er du sikker?</div>
-        <div class="text muted">Dette sletter hele indkøbssedlen ({{ totalCount }} linjer) og kan ikke fortrydes.</div>
-      </div>
-    </div>
-
-    <div class="actions">
-      <button pButton type="button" class="p-button-text" label="Annuller" (click)="closeClearDialog()" [disabled]="clearingList"></button>
-      <button pButton type="button" label="Ryd liste" icon="pi pi-trash" severity="danger" (click)="confirmClearList()" [loading]="clearingList"></button>
-    </div>
-  </div>
-</p-dialog>

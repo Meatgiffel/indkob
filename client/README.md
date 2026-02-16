@@ -2,6 +2,8 @@
 
 Angular-frontend til Indkøb (PWA) bygget med PrimeNG/PrimeFlex.
 
+Klienten bruger SignalR til live synkronisering af indkøbssedlen mellem åbne klienter.
+
 ## Ruter
 - `/login`: Login med brugernavn/password (inkl. husk mig).
 - `/list`: Opret og vedligehold indkøbsseddel (inkl. opret vare fra søgning).

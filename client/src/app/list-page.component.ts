@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AbstractControl, FormBuilder, FormsModule, ReactiveFormsModule, ValidationErrors } from '@angular/forms';
-import { firstValueFrom } from 'rxjs';
+import { Subject, auditTime, firstValueFrom, interval, takeUntil } from 'rxjs';
 import { DropdownModule } from 'primeng/dropdown';
 import { AutoCompleteModule } from 'primeng/autocomplete';
 import { InputTextModule } from 'primeng/inputtext';
@@ -10,10 +10,12 @@ import { CardModule } from 'primeng/card';
 import { TagModule } from 'primeng/tag';
 import { CheckboxModule } from 'primeng/checkbox';
 import { DividerModule } from 'primeng/divider';
+import { DialogModule } from 'primeng/dialog';
 import { MessageService } from 'primeng/api';
 
 import { ApiService } from './services/api.service';
 import { parseHttpError } from './services/http-error';
+import { GroceryRealtimeService } from './services/grocery-realtime.service';
 import { GroceryEntry, Item } from './models';
 
 @Component({
@@ -30,7 +32,8 @@ import { GroceryEntry, Item } from './models';
     CardModule,
     TagModule,
     CheckboxModule,
-    DividerModule
+    DividerModule,
+    DialogModule
   ],
   templateUrl: './list-page.component.html',
   styleUrl: './list-page.component.scss'
@@ -55,7 +58,12 @@ export class ListPageComponent implements OnInit {
   loadingItems = false;
   loadingEntries = false;
   savingEntry = false;
+  clearingList = false;
+  clearDialogOpen = false;
   editingEntryId: number | null = null;
+  private readonly destroy$ = new Subject<void>();
+  private entriesLoadPromise: Promise<void> | null = null;
+  private queuedEntriesReload = false;
 
   entryForm = this.fb.group(
     {
@@ -70,12 +78,34 @@ export class ListPageComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private api: ApiService,
-    private toast: MessageService
+    private toast: MessageService,
+    private groceryRealtime: GroceryRealtimeService
   ) {}
 
   ngOnInit(): void {
-    this.loadItems();
-    this.loadEntries();
+    void this.loadItems();
+    void this.loadEntries();
+    void this.groceryRealtime.ensureStarted();
+
+    this.groceryRealtime.changes$
+      .pipe(
+        auditTime(200),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => {
+        void this.loadEntries();
+      });
+
+    interval(45000)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        void this.loadEntries();
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   async loadItems(): Promise<void> {
@@ -92,13 +122,30 @@ export class ListPageComponent implements OnInit {
   }
 
   async loadEntries(): Promise<void> {
+    if (this.entriesLoadPromise) {
+      this.queuedEntriesReload = true;
+      return this.entriesLoadPromise;
+    }
+
     this.loadingEntries = true;
+    this.entriesLoadPromise = (async () => {
+      try {
+        this.entries = await firstValueFrom(this.api.getEntries());
+      } catch (err) {
+        this.toast.add({ severity: 'error', summary: 'Fejl', detail: 'Kunne ikke hente indkøbsseddel.' });
+      } finally {
+        this.loadingEntries = false;
+      }
+    })();
+
     try {
-      this.entries = await firstValueFrom(this.api.getEntries());
-    } catch (err) {
-      this.toast.add({ severity: 'error', summary: 'Fejl', detail: 'Kunne ikke hente indkøbsseddel.' });
+      await this.entriesLoadPromise;
     } finally {
-      this.loadingEntries = false;
+      this.entriesLoadPromise = null;
+      if (this.queuedEntriesReload) {
+        this.queuedEntriesReload = false;
+        void this.loadEntries();
+      }
     }
   }
 
@@ -193,6 +240,32 @@ export class ListPageComponent implements OnInit {
       await this.loadEntries();
     } catch {
       this.toast.add({ severity: 'error', summary: 'Fejl', detail: 'Kunne ikke slette linjen.' });
+    }
+  }
+
+  openClearDialog(): void {
+    if (!this.entries.length) return;
+    this.clearDialogOpen = true;
+  }
+
+  closeClearDialog(): void {
+    if (this.clearingList) return;
+    this.clearDialogOpen = false;
+  }
+
+  async confirmClearList(): Promise<void> {
+    if (this.clearingList) return;
+    this.clearingList = true;
+    try {
+      await firstValueFrom(this.api.clearEntries());
+      this.toast.add({ severity: 'success', summary: 'Ryddet', detail: 'Indkøbssedlen er tømt.' });
+      this.clearDialogOpen = false;
+      await this.loadEntries();
+      this.cancelEntryEdit();
+    } catch (err: any) {
+      this.toast.add({ severity: 'error', summary: 'Fejl', detail: parseHttpError(err, 'Kunne ikke rydde indkøbsseddel.') });
+    } finally {
+      this.clearingList = false;
     }
   }
 

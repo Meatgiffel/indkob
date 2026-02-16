@@ -1,5 +1,7 @@
 using Api.Data;
 using Api.Auth;
+using Api.Hubs;
+using Api.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -12,6 +14,8 @@ const string CorsPolicyName = "Client";
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<IGroceryChangeNotifier, GroceryChangeNotifier>();
 
 var dataProtectionKeysPath = builder.Configuration.GetValue<string>("Auth:DataProtectionKeysPath");
 if (string.IsNullOrWhiteSpace(dataProtectionKeysPath))
@@ -110,5 +114,6 @@ app.UseCors(CorsPolicyName);
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<GroceryHub>("/hubs/grocery");
 
 app.Run();

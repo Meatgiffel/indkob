@@ -1,6 +1,7 @@
 using Api.Data;
 using Api.Dtos;
 using Api.Models;
+using Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +12,7 @@ namespace Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class GroceryEntriesController(AppDbContext db) : ControllerBase
+public class GroceryEntriesController(AppDbContext db, IGroceryChangeNotifier groceryChangeNotifier) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<GroceryEntryDto>>> GetAll()
@@ -82,6 +83,7 @@ public class GroceryEntriesController(AppDbContext db) : ControllerBase
 
             db.GroceryEntries.Add(noteEntry);
             await db.SaveChangesAsync();
+            await groceryChangeNotifier.NotifyCreatedAsync(noteEntry.Id);
 
             var noteDto = new GroceryEntryDto(noteEntry.Id, null, null, null, noteEntry.Amount, noteEntry.Note, noteEntry.IsDone, noteEntry.CreatedAt);
             return CreatedAtAction(nameof(GetById), new { id = noteEntry.Id }, noteDto);
@@ -107,6 +109,7 @@ public class GroceryEntriesController(AppDbContext db) : ControllerBase
 
         db.GroceryEntries.Add(entry);
         await db.SaveChangesAsync();
+        await groceryChangeNotifier.NotifyCreatedAsync(entry.Id);
 
         var dto = new GroceryEntryDto(entry.Id, item.Id, item.Name, item.Area, entry.Amount, entry.Note, entry.IsDone, entry.CreatedAt);
         return CreatedAtAction(nameof(GetById), new { id = entry.Id }, dto);
@@ -137,6 +140,7 @@ public class GroceryEntriesController(AppDbContext db) : ControllerBase
             entry.IsDone = request.IsDone;
 
             await db.SaveChangesAsync();
+            await groceryChangeNotifier.NotifyUpdatedAsync(entry.Id);
 
             var noteDto = new GroceryEntryDto(entry.Id, null, null, null, entry.Amount, entry.Note, entry.IsDone, entry.CreatedAt);
             return Ok(noteDto);
@@ -158,6 +162,7 @@ public class GroceryEntriesController(AppDbContext db) : ControllerBase
         entry.IsDone = request.IsDone;
 
         await db.SaveChangesAsync();
+        await groceryChangeNotifier.NotifyUpdatedAsync(entry.Id);
 
         var dto = new GroceryEntryDto(entry.Id, item.Id, item.Name, item.Area, entry.Amount, entry.Note, entry.IsDone, entry.CreatedAt);
         return Ok(dto);
@@ -172,8 +177,10 @@ public class GroceryEntriesController(AppDbContext db) : ControllerBase
             return NotFound();
         }
 
+        var entryId = entry.Id;
         db.GroceryEntries.Remove(entry);
         await db.SaveChangesAsync();
+        await groceryChangeNotifier.NotifyDeletedAsync(entryId);
         return NoContent();
     }
 
@@ -181,6 +188,7 @@ public class GroceryEntriesController(AppDbContext db) : ControllerBase
     public async Task<IActionResult> Clear()
     {
         await db.GroceryEntries.ExecuteDeleteAsync();
+        await groceryChangeNotifier.NotifyClearedAsync();
         return NoContent();
     }
 }

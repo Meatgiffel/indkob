@@ -1,16 +1,16 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { firstValueFrom } from 'rxjs';
+import { Subject, auditTime, firstValueFrom, interval, takeUntil } from 'rxjs';
 import { CardModule } from 'primeng/card';
 import { DropdownModule } from 'primeng/dropdown';
 import { ButtonModule } from 'primeng/button';
 import { MessageService } from 'primeng/api';
-import { DialogModule } from 'primeng/dialog';
 
 import { ApiService } from './services/api.service';
 import { GroceryEntry } from './models';
 import { parseHttpError } from './services/http-error';
+import { GroceryRealtimeService } from './services/grocery-realtime.service';
 
 type RowFeedbackState = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -24,15 +24,13 @@ type RowFeedback = {
 @Component({
   selector: 'app-shop-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, CardModule, DropdownModule, ButtonModule, DialogModule],
+  imports: [CommonModule, FormsModule, CardModule, DropdownModule, ButtonModule],
   templateUrl: './shop-page.component.html',
   styleUrl: './shop-page.component.scss'
 })
 export class ShopPageComponent implements OnInit {
   entries: GroceryEntry[] = [];
   loadingEntries = false;
-  clearingList = false;
-  clearDialogOpen = false;
   doneFilter: 'all' | 'done' | 'open' = 'open';
   readonly doneFilterOptions = [
     { label: 'Alle', value: 'all' as const },
@@ -45,14 +43,39 @@ export class ShopPageComponent implements OnInit {
   private readonly feedbackById = new Map<number, RowFeedback>();
   confirmingEntryId: number | null = null;
   private confirmResetHandle: ReturnType<typeof setTimeout> | null = null;
+  private readonly destroy$ = new Subject<void>();
+  private entriesLoadPromise: Promise<void> | null = null;
+  private queuedEntriesReload = false;
 
   constructor(
     private api: ApiService,
-    private toast: MessageService
+    private toast: MessageService,
+    private groceryRealtime: GroceryRealtimeService
   ) {}
 
   ngOnInit(): void {
-    this.loadEntries();
+    void this.loadEntries();
+    void this.groceryRealtime.ensureStarted();
+
+    this.groceryRealtime.changes$
+      .pipe(
+        auditTime(200),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => {
+        void this.loadEntries();
+      });
+
+    interval(45000)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        void this.loadEntries();
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   get openCount(): number {
@@ -61,10 +84,6 @@ export class ShopPageComponent implements OnInit {
 
   get doneCount(): number {
     return this.entries.filter(e => e.isDone).length;
-  }
-
-  get totalCount(): number {
-    return this.entries.length;
   }
 
   private get visibleEntries(): GroceryEntry[] {
@@ -96,40 +115,32 @@ export class ShopPageComponent implements OnInit {
   }
 
   async loadEntries(): Promise<void> {
-    this.loadingEntries = true;
-    try {
-      const entries = await firstValueFrom(this.api.getEntries());
-      this.entries = entries;
-      this.resetLocalState(entries);
-    } catch (err: any) {
-      this.toast.add({ severity: 'error', summary: 'Fejl', detail: parseHttpError(err, 'Kunne ikke hente indkøbsseddel.') });
-    } finally {
-      this.loadingEntries = false;
+    if (this.entriesLoadPromise) {
+      this.queuedEntriesReload = true;
+      return this.entriesLoadPromise;
     }
-  }
 
-  openClearDialog(): void {
-    if (!this.totalCount) return;
-    this.clearDialogOpen = true;
-  }
+    this.loadingEntries = true;
+    this.entriesLoadPromise = (async () => {
+      try {
+        const entries = await firstValueFrom(this.api.getEntries());
+        this.entries = entries;
+        this.resetLocalState(entries);
+      } catch (err: any) {
+        this.toast.add({ severity: 'error', summary: 'Fejl', detail: parseHttpError(err, 'Kunne ikke hente indkøbsseddel.') });
+      } finally {
+        this.loadingEntries = false;
+      }
+    })();
 
-  closeClearDialog(): void {
-    if (this.clearingList) return;
-    this.clearDialogOpen = false;
-  }
-
-  async confirmClearList(): Promise<void> {
-    if (this.clearingList) return;
-    this.clearingList = true;
     try {
-      await firstValueFrom(this.api.clearEntries());
-      this.toast.add({ severity: 'success', summary: 'Ryddet', detail: 'Indkøbssedlen er tømt.' });
-      this.clearDialogOpen = false;
-      await this.loadEntries();
-    } catch (err: any) {
-      this.toast.add({ severity: 'error', summary: 'Fejl', detail: parseHttpError(err, 'Kunne ikke rydde indkøbsseddel.') });
+      await this.entriesLoadPromise;
     } finally {
-      this.clearingList = false;
+      this.entriesLoadPromise = null;
+      if (this.queuedEntriesReload) {
+        this.queuedEntriesReload = false;
+        void this.loadEntries();
+      }
     }
   }
 

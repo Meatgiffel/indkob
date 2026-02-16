@@ -8,6 +8,7 @@ Indkøb er en lille PWA til en delt indkøbsliste. Du vedligeholder et varekatal
 - Varekatalog med hurtig oprettelse og inline redigering.
 - Indkøbsseddel der grupperer efter område.
 - “Handle”-visning der prioriterer tæt liste og touch.
+- Live synkronisering mellem klienter (SignalR) for indkøbsseddel.
 - Ugentlig madplan (aftensmad) med autosave.
 - PWA (offline-klar), PrimeNG UI.
 - Simpelt login (brugernavn + password) og bruger-administration.
