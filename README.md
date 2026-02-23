@@ -20,6 +20,7 @@ Indkøb er en lille PWA til en delt indkøbsliste. Du vedligeholder et varekatal
 ## Dokumentation
 - API contract: `docs/api-contract.md`
 - Prioriteret hardening-plan: `docs/hardening-plan.md`
+- Deployment runbook: `docs/deployment-runbook.md`
 - Agent/repo guidelines: `AGENTS.md`
 
 ## Kør lokalt

@@ -114,3 +114,27 @@ a {
   background: rgba(15, 169, 167, 0.18);
   color: var(--ink);
 }
+
+/* Keep PrimeIcons visually centered in buttons, pills, and nav links. */
+i.pi,
+span.pi {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.p-button .p-button-icon {
+  line-height: 1;
+}
+
+.p-button.p-button-icon-only {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.p-button.p-button-icon-only .p-button-icon {
+  margin: 0;
+}

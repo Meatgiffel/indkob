@@ -41,7 +41,7 @@ import { GroceryEntry, Item } from './models';
 export class ListPageComponent implements OnInit {
   items: Item[] = [];
   entries: GroceryEntry[] = [];
-  filteredItems: (Item & { _create?: boolean })[] = [];
+  filteredItems: (Item & { _create?: boolean; _createName?: string })[] = [];
   areaOptions: string[] = [];
   filteredAreas: string[] = [];
   doneFilter: 'all' | 'done' | 'open' = 'all';
@@ -319,14 +319,15 @@ export class ListPageComponent implements OnInit {
     );
 
     const alreadyExists = this.items.some(item => item.name.toLowerCase() === query);
-    const createOption: (Item & { _create?: boolean })[] =
+    const createOption: (Item & { _create?: boolean; _createName?: string })[] =
       queryRaw && !alreadyExists
         ? [
             {
               id: -1,
               name: `Opret "${queryRaw}"`,
               area: this.newItemArea || this.filteredAreas[0] || 'Andet',
-              _create: true
+              _create: true,
+              _createName: queryRaw
             }
           ]
         : [];
@@ -335,10 +336,10 @@ export class ListPageComponent implements OnInit {
   }
 
   selectItem(event: any): void {
-    const item = event?.value as (Item & { _create?: boolean }) | undefined;
+    const item = event?.value as (Item & { _create?: boolean; _createName?: string }) | undefined;
     if (!item) return;
     if (item._create) {
-      this.createItemFromSearch();
+      void this.createItemFromSearch(item._createName);
       return;
     }
     this.entryForm.patchValue({ itemId: item.id });
@@ -368,8 +369,8 @@ export class ListPageComponent implements OnInit {
     }
   }
 
-  async createItemFromSearch(): Promise<void> {
-    const name = (this.typedTerm || this.searchTerm).trim();
+  async createItemFromSearch(preferredName?: string): Promise<void> {
+    const name = (preferredName || this.typedTerm || this.searchTerm).trim();
     const area = (this.newItemArea || this.filteredAreas[0] || 'Andet').trim();
     if (!name) {
       this.toast.add({ severity: 'warn', summary: 'Manglende data', detail: 'Navn er påkrævet.' });
