@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { InputTextareaModule } from 'primeng/inputtextarea';
+import { AutoCompleteModule } from 'primeng/autocomplete';
 import { MessageService } from 'primeng/api';
 
 import { ApiService } from './services/api.service';
@@ -44,7 +45,7 @@ type ConfirmState = {
 @Component({
   selector: 'app-meal-plan-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, CardModule, ButtonModule, InputTextareaModule],
+  imports: [CommonModule, FormsModule, CardModule, ButtonModule, InputTextareaModule, AutoCompleteModule],
   templateUrl: './meal-plan-page.component.html',
   styleUrl: './meal-plan-page.component.scss'
 })
@@ -53,6 +54,7 @@ export class MealPlanPageComponent implements OnInit {
   weekStart = startOfWeek(new Date());
   days: MealPlanDay[] = [];
   areaSuggestions: string[] = [];
+  filteredAreas: string[] = [];
 
   // Recipe picker (one open at a time, keyed by day date)
   openDay: string | null = null;
@@ -329,6 +331,13 @@ export class MealPlanPageComponent implements OnInit {
 
   closeConfirm(): void {
     this.confirm = null;
+  }
+
+  filterAreas(event: { query: string }): void {
+    const query = (event.query ?? '').toLowerCase();
+    this.filteredAreas = query
+      ? this.areaSuggestions.filter(area => area.toLowerCase().includes(query))
+      : [...this.areaSuggestions];
   }
 
   toggleIngredient(ing: ModalIngredient): void {

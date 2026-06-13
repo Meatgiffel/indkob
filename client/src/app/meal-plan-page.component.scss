@@ -563,25 +563,23 @@ $muted-2: #94a3b8;
   opacity: 0.7;
 }
 
-.ing-area input {
+.ing-area .area-ac {
   flex: 1;
-  border: 1px solid var(--border-strong);
-  border-radius: 9px;
-  padding: 7px 10px;
-  font: inherit;
-  font-size: 0.88rem;
-  background: var(--surface);
-  color: inherit;
   min-width: 0;
 }
 
-.ing-area input:focus {
-  outline: none;
-  border-color: $teal;
-  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.13);
+.ing-area ::ng-deep .p-autocomplete {
+  width: 100%;
 }
 
-.ing-area input.missing {
+.ing-area ::ng-deep .p-autocomplete .p-inputtext {
+  width: 100%;
+  border-radius: 9px;
+  padding: 7px 10px;
+  font-size: 0.88rem;
+}
+
+.ing-area ::ng-deep .area-missing .p-inputtext {
   border-color: #f59e0b;
 }
 

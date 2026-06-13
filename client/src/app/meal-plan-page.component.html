@@ -170,21 +170,21 @@
           <!-- Area picker for selected, unmatched ingredients -->
           <div class="ing-area" *ngIf="ing.checked && !ing.alreadyOnList && ing.matchedItemId === null">
             <label>Område</label>
-            <input
-              type="text"
+            <p-autoComplete
               [(ngModel)]="ing.area"
               [ngModelOptions]="{ standalone: true }"
-              list="area-suggestions"
+              [suggestions]="filteredAreas"
+              [dropdown]="true"
+              [forceSelection]="false"
+              (completeMethod)="filterAreas($event)"
               placeholder="Fx Køl, Frugt & grønt…"
-              [class.missing]="!ing.area.trim()"
-            />
+              styleClass="area-ac"
+              appendTo="body"
+              [ngClass]="{ 'area-missing': !ing.area.trim() }"
+            ></p-autoComplete>
           </div>
         </div>
       </div>
-
-      <datalist id="area-suggestions">
-        <option *ngFor="let a of areaSuggestions" [value]="a"></option>
-      </datalist>
 
       <div class="modal-hint" *ngIf="missingArea">
         Vælg et butiks-område for de nye varer for at fortsætte.
