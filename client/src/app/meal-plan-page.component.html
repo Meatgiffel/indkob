@@ -14,7 +14,7 @@
     </div>
 
     <div class="day-list" *ngIf="days.length; else loadingState">
-      <div class="day-row" *ngFor="let day of days">
+      <div class="day-row" *ngFor="let day of days" [class.filled]="day.recipeSlug">
         <div class="day-meta">
           <div class="day-meta-top">
             <div class="day-name">
@@ -26,7 +26,7 @@
               type="button"
               icon="pi pi-trash"
               class="p-button-text p-button-danger p-button-sm"
-              [disabled]="isSaving(day.date) || !day.dinner"
+              [disabled]="isSaving(day.date) || (!day.dinner && !day.recipeSlug)"
               (click)="clearDay(day)"
               aria-label="Ryd"
             ></button>
@@ -52,17 +52,72 @@
           </div>
         </div>
 
-        <textarea
-          pInputTextarea
-          class="dinner-input"
-          [(ngModel)]="day.dinner"
-          (ngModelChange)="onDinnerChange(day)"
-          [ngModelOptions]="{ standalone: true }"
-          placeholder="Aftensmad…"
-          [autoResize]="true"
-          rows="3"
-          (blur)="saveDay(day)"
-        ></textarea>
+        <div class="meal-cell">
+          <div class="meal-top">
+            <textarea
+              pInputTextarea
+              class="dinner-input"
+              [class.has-recipe]="day.recipeSlug"
+              [(ngModel)]="day.dinner"
+              (ngModelChange)="onDinnerChange(day)"
+              [ngModelOptions]="{ standalone: true }"
+              placeholder="Aftensmad…"
+              [autoResize]="true"
+              rows="2"
+              (blur)="saveDay(day)"
+            ></textarea>
+
+            <button
+              type="button"
+              class="pick-btn"
+              [class.open]="openDay === day.date"
+              (click)="togglePicker(day, $event)"
+            >
+              <i class="pi pi-book"></i>
+              <span>Vælg opskrift</span>
+            </button>
+          </div>
+
+          <span class="recipe-tag" *ngIf="day.recipeSlug">
+            <i class="pi pi-check"></i>
+            <span class="r-name">{{ day.recipeName }}</span>
+            <button type="button" class="re-add" (click)="openIngredients(day)">Tilføj til liste</button>
+          </span>
+
+          <!-- Recipe picker dropdown -->
+          <div class="combo" *ngIf="openDay === day.date" (click)="$event.stopPropagation()">
+            <div class="combo-search">
+              <i class="pi pi-search"></i>
+              <input
+                type="text"
+                [(ngModel)]="pickerQuery"
+                [ngModelOptions]="{ standalone: true }"
+                (ngModelChange)="onPickerQueryChange()"
+                placeholder="Søg blandt opskrifter…"
+                autofocus
+              />
+              <button type="button" class="combo-x" (click)="closePicker()" aria-label="Luk"><i class="pi pi-times"></i></button>
+            </div>
+            <div class="combo-list">
+              <div class="combo-status" *ngIf="pickerLoading"><i class="pi pi-spin pi-spinner"></i> Henter…</div>
+              <div class="combo-status error" *ngIf="pickerError && !pickerLoading">{{ pickerError }}</div>
+              <div class="combo-empty" *ngIf="!pickerLoading && !pickerError && pickerResults.length === 0">
+                Ingen opskrifter matcher.
+              </div>
+              <div
+                class="combo-opt"
+                *ngFor="let r of pickerResults"
+                (click)="pickRecipe(day, r)"
+              >
+                <div class="combo-ic"><i class="pi pi-book"></i></div>
+                <div class="combo-meta">
+                  <div class="combo-name">{{ r.name }}</div>
+                  <div class="combo-sub" *ngIf="r.description">{{ r.description }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -70,4 +125,78 @@
       <div class="empty muted">{{ loading ? 'Henter…' : 'Ingen data' }}</div>
     </ng-template>
   </p-card>
+</div>
+
+<!-- Ingredient confirmation modal -->
+<div class="overlay" *ngIf="confirm" (mousedown)="closeConfirm()">
+  <div class="modal" (mousedown)="$event.stopPropagation()">
+    <div class="modal-head">
+      <div class="m-ic"><i class="pi pi-shopping-cart"></i></div>
+      <div class="m-titles">
+        <h3>Tilføj ingredienser til indkøbslisten?</h3>
+        <div class="m-sub">{{ confirm.recipeName }}<span *ngIf="!confirm.loading"> · {{ confirm.ingredients.length }} ingredienser</span></div>
+      </div>
+      <button type="button" class="modal-x" (click)="closeConfirm()" aria-label="Luk"><i class="pi pi-times"></i></button>
+    </div>
+
+    <div class="modal-loading" *ngIf="confirm.loading">
+      <i class="pi pi-spin pi-spinner"></i> Henter ingredienser…
+    </div>
+
+    <ng-container *ngIf="!confirm.loading">
+      <div class="ing-tools">
+        <span class="ing-count">{{ selectedCount }} af {{ selectableIngredients.length }} valgt</span>
+        <button type="button" class="ing-toggle" *ngIf="selectableIngredients.length" (click)="toggleAll()">
+          {{ allSelected ? 'Fravælg alle' : 'Vælg alle' }}
+        </button>
+      </div>
+
+      <div class="ing-list">
+        <div
+          class="ing-item"
+          *ngFor="let ing of confirm.ingredients"
+          [class.dup]="ing.alreadyOnList"
+        >
+          <div class="ing-row" (click)="toggleIngredient(ing)">
+            <div class="cbox" [class.on]="ing.checked && !ing.alreadyOnList">
+              <i class="pi pi-check" *ngIf="ing.checked && !ing.alreadyOnList"></i>
+            </div>
+            <span class="ing-name">{{ ing.name }}</span>
+            <span class="ing-amount muted" *ngIf="ing.amount">{{ ing.amount }}</span>
+            <span class="ing-dup-tag" *ngIf="ing.alreadyOnList">Allerede på listen</span>
+            <span class="ing-new-tag" *ngIf="!ing.alreadyOnList && ing.matchedItemId === null">Ny vare</span>
+          </div>
+
+          <!-- Area picker for selected, unmatched ingredients -->
+          <div class="ing-area" *ngIf="ing.checked && !ing.alreadyOnList && ing.matchedItemId === null">
+            <label>Område</label>
+            <input
+              type="text"
+              [(ngModel)]="ing.area"
+              [ngModelOptions]="{ standalone: true }"
+              list="area-suggestions"
+              placeholder="Fx Køl, Frugt & grønt…"
+              [class.missing]="!ing.area.trim()"
+            />
+          </div>
+        </div>
+      </div>
+
+      <datalist id="area-suggestions">
+        <option *ngFor="let a of areaSuggestions" [value]="a"></option>
+      </datalist>
+
+      <div class="modal-hint" *ngIf="missingArea">
+        Vælg et butiks-område for de nye varer for at fortsætte.
+      </div>
+
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" (click)="closeConfirm()">Annuller</button>
+        <button type="button" class="btn btn-primary" [disabled]="confirmDisabled" (click)="confirmAdd()">
+          <i class="pi" [class.pi-plus]="!adding" [class.pi-spin]="adding" [class.pi-spinner]="adding"></i>
+          {{ selectedCount > 0 ? 'Tilføj ' + selectedCount + (selectedCount === 1 ? ' vare' : ' varer') : 'Vælg varer' }}
+        </button>
+      </div>
+    </ng-container>
+  </div>
 </div>

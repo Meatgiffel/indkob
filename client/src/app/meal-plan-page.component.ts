@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { CardModule } from 'primeng/card';
@@ -9,11 +9,7 @@ import { MessageService } from 'primeng/api';
 
 import { ApiService } from './services/api.service';
 import { parseHttpError } from './services/http-error';
-
-type MealPlanDay = {
-  date: string;
-  dinner: string | null;
-};
+import { MealPlanDay, RecipeSummary } from './models';
 
 type SaveState = 'idle' | 'dirty' | 'saving' | 'saved' | 'error';
 
@@ -27,6 +23,24 @@ type DaySaveStatus = {
   resetHandle: ReturnType<typeof setTimeout> | null;
 };
 
+type ModalIngredient = {
+  name: string;
+  amount: string | null;
+  display: string;
+  matchedItemId: number | null;
+  matchedItemArea: string | null;
+  alreadyOnList: boolean;
+  checked: boolean;
+  area: string;
+};
+
+type ConfirmState = {
+  date: string;
+  recipeName: string;
+  loading: boolean;
+  ingredients: ModalIngredient[];
+};
+
 @Component({
   selector: 'app-meal-plan-page',
   standalone: true,
@@ -38,6 +52,20 @@ export class MealPlanPageComponent implements OnInit {
   loading = false;
   weekStart = startOfWeek(new Date());
   days: MealPlanDay[] = [];
+  areaSuggestions: string[] = [];
+
+  // Recipe picker (one open at a time, keyed by day date)
+  openDay: string | null = null;
+  pickerQuery = '';
+  pickerResults: RecipeSummary[] = [];
+  pickerLoading = false;
+  pickerError: string | null = null;
+  private pickerDebounce: ReturnType<typeof setTimeout> | null = null;
+
+  // Ingredient confirmation modal
+  confirm: ConfirmState | null = null;
+  adding = false;
+
   private saving = new Set<string>();
   private readonly statusByDate = new Map<string, DaySaveStatus>();
 
@@ -48,6 +76,7 @@ export class MealPlanPageComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
+    this.loadAreas();
   }
 
   get weekLabel(): string {
@@ -81,10 +110,22 @@ export class MealPlanPageComponent implements OnInit {
     }
   }
 
+  private async loadAreas(): Promise<void> {
+    try {
+      const items = await firstValueFrom(this.api.getItems());
+      this.areaSuggestions = Array.from(new Set(items.map(i => i.area).filter(Boolean))).sort((a, b) =>
+        a.localeCompare(b, 'da-DK')
+      );
+    } catch {
+      // Area suggestions are a nicety; ignore failures.
+    }
+  }
+
   async previousWeek(): Promise<void> {
     const date = parseIsoDate(this.weekStart);
     date.setDate(date.getDate() - 7);
     this.weekStart = startOfWeek(date);
+    this.closePicker();
     await this.load();
   }
 
@@ -92,11 +133,13 @@ export class MealPlanPageComponent implements OnInit {
     const date = parseIsoDate(this.weekStart);
     date.setDate(date.getDate() + 7);
     this.weekStart = startOfWeek(date);
+    this.closePicker();
     await this.load();
   }
 
   async goToCurrentWeek(): Promise<void> {
     this.weekStart = startOfWeek(new Date());
+    this.closePicker();
     await this.load();
   }
 
@@ -130,8 +173,9 @@ export class MealPlanPageComponent implements OnInit {
     this.clearDebounceHandle(status);
 
     const dinner = (day.dinner ?? '').trim();
-    if (!status.dirty && dinner === status.lastSavedNormalized) return;
-    if (dinner === status.lastSavedNormalized) {
+    const signature = this.daySignature(day);
+    if (!status.dirty && signature === status.lastSavedNormalized) return;
+    if (signature === status.lastSavedNormalized) {
       status.dirty = false;
       status.state = 'saved';
       this.scheduleResetSaved(day.date);
@@ -148,9 +192,19 @@ export class MealPlanPageComponent implements OnInit {
 
     this.saving.add(day.date);
     try {
-      const updated = await firstValueFrom(this.api.upsertMealPlanDay(day.date, dinner || null));
+      const updated = await firstValueFrom(
+        this.api.upsertMealPlanDay(day.date, {
+          dinner: dinner || null,
+          recipeSlug: day.recipeSlug,
+          recipeName: day.recipeName,
+          recipeId: day.recipeId
+        })
+      );
       day.dinner = updated.dinner;
-      status.lastSavedNormalized = (updated.dinner ?? '').trim();
+      day.recipeSlug = updated.recipeSlug;
+      day.recipeName = updated.recipeName;
+      day.recipeId = updated.recipeId;
+      status.lastSavedNormalized = this.daySignature(day);
       status.dirty = false;
       status.state = 'saved';
       status.showSavingIcon = false;
@@ -172,7 +226,179 @@ export class MealPlanPageComponent implements OnInit {
     this.clearResetHandle(status);
     status.dirty = true;
     day.dinner = null;
+    day.recipeSlug = null;
+    day.recipeName = null;
+    day.recipeId = null;
     await this.saveDay(day);
+  }
+
+  /* ---------- Recipe picker ---------- */
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    if (this.openDay) this.closePicker();
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.confirm) this.closeConfirm();
+    else if (this.openDay) this.closePicker();
+  }
+
+  togglePicker(day: MealPlanDay, event?: Event): void {
+    event?.stopPropagation();
+    if (this.openDay === day.date) {
+      this.closePicker();
+      return;
+    }
+    this.openDay = day.date;
+    this.pickerQuery = '';
+    this.pickerError = null;
+    this.pickerResults = [];
+    this.runSearch();
+  }
+
+  closePicker(): void {
+    this.openDay = null;
+    if (this.pickerDebounce) {
+      clearTimeout(this.pickerDebounce);
+      this.pickerDebounce = null;
+    }
+  }
+
+  onPickerQueryChange(): void {
+    if (this.pickerDebounce) clearTimeout(this.pickerDebounce);
+    this.pickerDebounce = setTimeout(() => this.runSearch(), 250);
+  }
+
+  private async runSearch(): Promise<void> {
+    this.pickerLoading = true;
+    this.pickerError = null;
+    try {
+      this.pickerResults = await firstValueFrom(this.api.searchRecipes(this.pickerQuery.trim()));
+    } catch (err: any) {
+      this.pickerResults = [];
+      this.pickerError = parseHttpError(err, 'Kunne ikke hente opskrifter.');
+    } finally {
+      this.pickerLoading = false;
+    }
+  }
+
+  async pickRecipe(day: MealPlanDay, recipe: RecipeSummary): Promise<void> {
+    day.dinner = recipe.name;
+    day.recipeSlug = recipe.slug;
+    day.recipeName = recipe.name;
+    day.recipeId = recipe.id;
+    const status = this.getStatus(day.date);
+    status.dirty = true;
+    this.closePicker();
+    await this.saveDay(day);
+    await this.openIngredients(day);
+  }
+
+  /* ---------- Ingredient modal ---------- */
+
+  async openIngredients(day: MealPlanDay): Promise<void> {
+    if (!day.recipeSlug) return;
+    this.confirm = {
+      date: day.date,
+      recipeName: day.recipeName ?? day.dinner ?? 'Opskrift',
+      loading: true,
+      ingredients: []
+    };
+    try {
+      const data = await firstValueFrom(this.api.getRecipeIngredients(day.recipeSlug));
+      if (!this.confirm || this.confirm.date !== day.date) return;
+      this.confirm.recipeName = data.name;
+      this.confirm.ingredients = data.ingredients.map(ing => ({
+        name: ing.name,
+        amount: ing.amount,
+        display: ing.display,
+        matchedItemId: ing.matchedItemId,
+        matchedItemArea: ing.matchedItemArea,
+        alreadyOnList: ing.alreadyOnList,
+        checked: !ing.alreadyOnList,
+        area: ing.matchedItemArea ?? ''
+      }));
+      this.confirm.loading = false;
+    } catch (err: any) {
+      this.confirm = null;
+      this.toast.add({ severity: 'error', summary: 'Fejl', detail: parseHttpError(err, 'Kunne ikke hente ingredienser.') });
+    }
+  }
+
+  closeConfirm(): void {
+    this.confirm = null;
+  }
+
+  toggleIngredient(ing: ModalIngredient): void {
+    if (ing.alreadyOnList) return;
+    ing.checked = !ing.checked;
+  }
+
+  get selectableIngredients(): ModalIngredient[] {
+    return this.confirm ? this.confirm.ingredients.filter(i => !i.alreadyOnList) : [];
+  }
+
+  get selectedCount(): number {
+    return this.selectableIngredients.filter(i => i.checked).length;
+  }
+
+  get allSelected(): boolean {
+    const sel = this.selectableIngredients;
+    return sel.length > 0 && sel.every(i => i.checked);
+  }
+
+  toggleAll(): void {
+    const target = !this.allSelected;
+    for (const ing of this.selectableIngredients) ing.checked = target;
+  }
+
+  /** True when a selected, unmatched ingredient is still missing an area. */
+  get missingArea(): boolean {
+    return this.selectableIngredients.some(i => i.checked && i.matchedItemId === null && !i.area.trim());
+  }
+
+  get confirmDisabled(): boolean {
+    return this.adding || this.selectedCount === 0 || this.missingArea;
+  }
+
+  async confirmAdd(): Promise<void> {
+    if (!this.confirm || this.confirmDisabled) return;
+    const chosen = this.selectableIngredients.filter(i => i.checked);
+    const payload = {
+      source: this.confirm.recipeName,
+      ingredients: chosen.map(i => ({
+        name: i.name,
+        amount: i.amount,
+        itemId: i.matchedItemId,
+        area: i.matchedItemId === null ? i.area.trim() : null
+      }))
+    };
+
+    this.adding = true;
+    try {
+      const created = await firstValueFrom(this.api.addRecipeToList(payload));
+      const n = created.length;
+      this.confirm = null;
+      this.toast.add({
+        severity: 'success',
+        summary: 'Tilføjet',
+        detail: `${n} ${n === 1 ? 'vare' : 'varer'} tilføjet til indkøbslisten`
+      });
+      // Refresh area suggestions in case new ones were created.
+      this.loadAreas();
+    } catch (err: any) {
+      this.toast.add({ severity: 'error', summary: 'Fejl', detail: parseHttpError(err, 'Kunne ikke tilføje varer.') });
+    } finally {
+      this.adding = false;
+    }
+  }
+
+  /* ---------- Save bookkeeping ---------- */
+
+  private daySignature(day: MealPlanDay): string {
+    return [(day.dinner ?? '').trim(), day.recipeSlug ?? '', day.recipeId ?? ''].join(' ');
   }
 
   private scheduleSave(day: MealPlanDay): void {
@@ -194,7 +420,7 @@ export class MealPlanPageComponent implements OnInit {
       this.statusByDate.set(day.date, {
         state: 'idle',
         dirty: false,
-        lastSavedNormalized: (day.dinner ?? '').trim(),
+        lastSavedNormalized: this.daySignature(day),
         debounceHandle: null,
         savingIconDelayHandle: null,
         showSavingIcon: false,

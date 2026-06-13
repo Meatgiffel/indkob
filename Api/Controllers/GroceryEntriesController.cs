@@ -191,4 +191,106 @@ public class GroceryEntriesController(AppDbContext db, IGroceryChangeNotifier gr
         await groceryChangeNotifier.NotifyClearedAsync();
         return NoContent();
     }
+
+    [HttpPost("from-recipe")]
+    public async Task<ActionResult<IEnumerable<GroceryEntryDto>>> AddFromRecipe([FromBody] AddFromRecipeRequest request)
+    {
+        if (request.Ingredients.Count == 0)
+        {
+            return ValidationProblem("At least one ingredient is required.");
+        }
+
+        var source = string.IsNullOrWhiteSpace(request.Source) ? null : request.Source.Trim();
+        if (source is { Length: > 256 })
+        {
+            source = source[..256];
+        }
+
+        var created = new List<GroceryEntry>();
+
+        foreach (var ing in request.Ingredients)
+        {
+            var name = ing.Name?.Trim();
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                continue;
+            }
+
+            var amount = string.IsNullOrWhiteSpace(ing.Amount) ? null : ing.Amount.Trim();
+
+            int itemId;
+            if (ing.ItemId is int existingId)
+            {
+                var existing = await db.Items.FindAsync(existingId);
+                if (existing is null)
+                {
+                    return NotFound(new ProblemDetails
+                    {
+                        Title = $"Item {existingId} not found.",
+                        Status = StatusCodes.Status404NotFound
+                    });
+                }
+
+                itemId = existing.Id;
+            }
+            else
+            {
+                var area = ing.Area?.Trim();
+                if (string.IsNullOrWhiteSpace(area))
+                {
+                    return ValidationProblem($"An area is required to create the new item '{name}'.");
+                }
+
+                var normalizedName = name.ToLower();
+                var item = await db.Items.FirstOrDefaultAsync(i => i.Name.ToLower() == normalizedName);
+                if (item is null)
+                {
+                    item = new Item { Name = name, Area = area };
+                    db.Items.Add(item);
+                    await db.SaveChangesAsync();
+                }
+
+                itemId = item.Id;
+            }
+
+            var entry = new GroceryEntry
+            {
+                ItemId = itemId,
+                Amount = amount,
+                Note = source,
+                IsDone = false
+            };
+            db.GroceryEntries.Add(entry);
+            created.Add(entry);
+        }
+
+        if (created.Count == 0)
+        {
+            return ValidationProblem("No valid ingredients to add.");
+        }
+
+        await db.SaveChangesAsync();
+
+        foreach (var entry in created)
+        {
+            await groceryChangeNotifier.NotifyCreatedAsync(entry.Id);
+        }
+
+        var ids = created.Select(c => c.Id).ToList();
+        var dtos = await db.GroceryEntries
+            .AsNoTracking()
+            .Where(e => ids.Contains(e.Id))
+            .Select(e => new GroceryEntryDto(
+                e.Id,
+                e.ItemId,
+                e.Item != null ? e.Item.Name : null,
+                e.Item != null ? e.Item.Area : null,
+                e.Amount,
+                e.Note,
+                e.IsDone,
+                e.CreatedAt))
+            .ToListAsync();
+
+        return Ok(dtos);
+    }
 }

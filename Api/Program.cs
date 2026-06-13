@@ -17,6 +17,25 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<IGroceryChangeNotifier, GroceryChangeNotifier>();
 
+builder.Services.AddHttpClient<MealieService>((sp, client) =>
+{
+    var cfg = sp.GetRequiredService<IConfiguration>();
+    var baseUrl = cfg["Mealie:BaseUrl"];
+    if (!string.IsNullOrWhiteSpace(baseUrl))
+    {
+        client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
+    }
+
+    var token = cfg["Mealie:ApiToken"];
+    if (!string.IsNullOrWhiteSpace(token))
+    {
+        client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+    }
+
+    client.Timeout = TimeSpan.FromSeconds(15);
+});
+
 var dataProtectionKeysPath = builder.Configuration.GetValue<string>("Auth:DataProtectionKeysPath");
 if (string.IsNullOrWhiteSpace(dataProtectionKeysPath))
 {

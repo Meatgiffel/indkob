@@ -48,6 +48,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         {
             entity.Property(e => e.Date).IsRequired();
             entity.Property(e => e.Dinner).HasMaxLength(256);
+            entity.Property(e => e.RecipeSlug).HasMaxLength(128);
+            entity.Property(e => e.RecipeName).HasMaxLength(256);
+            entity.Property(e => e.RecipeId).HasMaxLength(64);
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .ValueGeneratedOnAdd();

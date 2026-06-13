@@ -2,7 +2,18 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { AuthUser, CreateEntryPayload, CreateItemPayload, GroceryEntry, Item, User } from '../models';
+import {
+  AddFromRecipePayload,
+  AuthUser,
+  CreateEntryPayload,
+  CreateItemPayload,
+  GroceryEntry,
+  Item,
+  MealPlanDay,
+  RecipeIngredients,
+  RecipeSummary,
+  User
+} from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -10,12 +21,24 @@ export class ApiService {
 
   constructor(private http: HttpClient) {}
 
-  getMealPlanWeek(weekStart: string): Observable<{ date: string; dinner: string | null }[]> {
-    return this.http.get<{ date: string; dinner: string | null }[]>(`${this.baseUrl}/mealplan`, { params: { weekStart } });
+  getMealPlanWeek(weekStart: string): Observable<MealPlanDay[]> {
+    return this.http.get<MealPlanDay[]>(`${this.baseUrl}/mealplan`, { params: { weekStart } });
   }
 
-  upsertMealPlanDay(date: string, dinner: string | null): Observable<{ date: string; dinner: string | null }> {
-    return this.http.put<{ date: string; dinner: string | null }>(`${this.baseUrl}/mealplan/${date}`, { dinner });
+  upsertMealPlanDay(date: string, payload: Partial<Omit<MealPlanDay, 'date'>>): Observable<MealPlanDay> {
+    return this.http.put<MealPlanDay>(`${this.baseUrl}/mealplan/${date}`, payload);
+  }
+
+  searchRecipes(q: string): Observable<RecipeSummary[]> {
+    return this.http.get<RecipeSummary[]>(`${this.baseUrl}/recipes/search`, { params: { q } });
+  }
+
+  getRecipeIngredients(slug: string): Observable<RecipeIngredients> {
+    return this.http.get<RecipeIngredients>(`${this.baseUrl}/recipes/${encodeURIComponent(slug)}/ingredients`);
+  }
+
+  addRecipeToList(payload: AddFromRecipePayload): Observable<GroceryEntry[]> {
+    return this.http.post<GroceryEntry[]>(`${this.baseUrl}/groceryentries/from-recipe`, payload);
   }
 
   me(): Observable<AuthUser> {

@@ -98,6 +98,15 @@ Sæt selv bootstrap-login (valgfrit) ved at sætte environment variables på `in
 - `Auth__BootstrapUser`
 - `Auth__BootstrapPassword`
 
+## Mealie (opskrifter i madplanen)
+Madplanen kan vælge opskrifter fra en selv-hostet [Mealie](https://github.com/mealie-recipes/mealie)-instans og tilføje opskriftens ingredienser til indkøbslisten. API’et kalder Mealie server-til-server, så tokenet aldrig rammer browseren.
+
+Sæt environment variables på `indkob-api` servicen (tokenet genereres i Mealie under `/user/profile/api-tokens`):
+- `Mealie__BaseUrl` (fx `http://192.168.50.61:9000`)
+- `Mealie__ApiToken`
+
+Er de ikke sat, fungerer resten af appen som før; opskriftsvælgeren svarer da `503` og viser en fejl. Umatchede ingredienser oprettes som nye varer i kataloget (man vælger område i dialogen); matchede ingredienser lægges på den eksisterende vare.
+
 ## Fejlsøgning
 Hvis frontend virker men API-kald fejler (fx `502 Bad Gateway`), så er det typisk fordi API-servicen ikke kører:
 

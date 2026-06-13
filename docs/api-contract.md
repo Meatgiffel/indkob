@@ -62,8 +62,40 @@ This document describes the HTTP contract implemented by the API in `Api/Control
 - `MealPlanDayDto`
   - `date: string` (`yyyy-MM-dd`)
   - `dinner: string | null`
+  - `recipeSlug: string | null` (Mealie recipe link; null = free-text only)
+  - `recipeName: string | null`
+  - `recipeId: string | null`
 - `UpdateMealPlanDayRequest`
-  - `dinner: string | null`
+  - `dinner: string | null` (max 256)
+  - `recipeSlug: string | null` (max 128)
+  - `recipeName: string | null` (max 256)
+  - `recipeId: string | null` (max 64)
+
+### Recipes (Mealie)
+- `RecipeSummaryDto`
+  - `id: string`
+  - `slug: string`
+  - `name: string`
+  - `description: string | null`
+- `RecipeIngredientDto`
+  - `name: string`
+  - `amount: string | null` (e.g. `"125 gram"`)
+  - `display: string` (Mealie's rendered line)
+  - `matchedItemId: number | null` (catalog item with same name, if any)
+  - `matchedItemArea: string | null`
+  - `alreadyOnList: boolean`
+- `RecipeIngredientsDto`
+  - `slug: string`
+  - `name: string`
+  - `ingredients: RecipeIngredientDto[]`
+- `AddFromRecipeRequest`
+  - `source: string | null` (recipe name; stored as the entry note)
+  - `ingredients: AddFromRecipeIngredient[]` (>= 1)
+- `AddFromRecipeIngredient`
+  - `name: string` (required, max 128)
+  - `amount: string | null` (max 64)
+  - `itemId: number | null` (link existing catalog item; when null, a new item is created)
+  - `area: string | null` (required when `itemId` is null)
 
 ### Users
 - `UserDto`
@@ -204,10 +236,42 @@ This document describes the HTTP contract implemented by the API in `Api/Control
 - Body: `UpdateMealPlanDayRequest`
 - Success: `200 OK` with `MealPlanDayDto`
 - Behavior:
-  - blank/whitespace dinner deletes stored entry for that date and returns `dinner: null`
-  - non-empty dinner upserts entry
+  - blank/whitespace dinner AND no `recipeSlug` deletes stored entry for that date and returns nulls
+  - otherwise upserts entry (recipe fields stored alongside dinner)
 - Errors:
   - `400 Bad Request` if dinner exceeds 256 chars or date format is invalid
+
+### Recipes (Mealie)
+
+These endpoints proxy a self-hosted Mealie instance (server-to-server). Require
+`Mealie:BaseUrl` and `Mealie:ApiToken` configured on the server.
+
+`GET /api/recipes/search?q=<text>`
+- Auth: required
+- Success: `200 OK` with `RecipeSummaryDto[]` (server-side name search via Mealie)
+- Errors:
+  - `503 Service Unavailable` if Mealie is not configured
+  - `502 Bad Gateway` if Mealie cannot be reached
+
+`GET /api/recipes/{slug}/ingredients`
+- Auth: required
+- Success: `200 OK` with `RecipeIngredientsDto` (ingredients matched against the
+  catalog and flagged if already on the list)
+- Errors:
+  - `404 Not Found` if the recipe does not exist
+  - `503` / `502` as above
+
+`POST /api/groceryentries/from-recipe`
+- Auth: required
+- Body: `AddFromRecipeRequest`
+- Success: `200 OK` with the created `GroceryEntryDto[]`
+- Behavior:
+  - matched ingredients (`itemId` set) become entries on that catalog item
+  - unmatched ingredients create a new catalog item under `area`, then an entry
+  - `source` is stored as each entry's note; broadcasts a `created` event per entry
+- Errors:
+  - `400 Bad Request` if no ingredients, or a new item is missing `area`
+  - `404 Not Found` if a referenced `itemId` does not exist
 
 ### Users (Admin)
 

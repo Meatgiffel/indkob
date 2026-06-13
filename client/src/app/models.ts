@@ -26,6 +26,48 @@ export interface CreateEntryPayload {
   note?: string | null;
 }
 
+export interface MealPlanDay {
+  date: string;
+  dinner: string | null;
+  recipeSlug: string | null;
+  recipeName: string | null;
+  recipeId: string | null;
+}
+
+export interface RecipeSummary {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+}
+
+export interface RecipeIngredient {
+  name: string;
+  amount: string | null;
+  display: string;
+  matchedItemId: number | null;
+  matchedItemArea: string | null;
+  alreadyOnList: boolean;
+}
+
+export interface RecipeIngredients {
+  slug: string;
+  name: string;
+  ingredients: RecipeIngredient[];
+}
+
+export interface AddFromRecipeIngredient {
+  name: string;
+  amount: string | null;
+  itemId: number | null;
+  area: string | null;
+}
+
+export interface AddFromRecipePayload {
+  source: string | null;
+  ingredients: AddFromRecipeIngredient[];
+}
+
 export interface AuthUser {
   id: number;
   userName: string;
